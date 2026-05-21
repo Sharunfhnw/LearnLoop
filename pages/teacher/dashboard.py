@@ -1,106 +1,200 @@
-from nicegui import ui
+from nicegui import ui, app
 from sqlmodel import select
 from data_access.db import Database
-from domain.models import Quiz
+from domain.models import Quiz, Question, QuizAttempt
 
 
 def teacher_dashboard(teacher_id: int):
-    ui.query('body').style('background-color: #F8F7F4')
+    """Render the teacher dashboard page."""
+    ui.query('body').style('background-color:#F8F7F4;margin:0')
 
+    db = Database()
+    session = db.get_session()
+    username = app.storage.user.get('username', 'Teacher')
+
+    # Load all quizzes for this teacher
+    quizzes = session.exec(
+        select(Quiz).where(Quiz.teacher_id == teacher_id)
+    ).all()
+
+    # Count total questions across all quizzes
+    total_questions = 0
+    for q in quizzes:
+        total_questions += len(session.exec(
+            select(Question).where(Question.quiz_id == q.id)
+        ).all())
+
+    # Count total student attempts across all quizzes
+    total_attempts = 0
+    for q in quizzes:
+        total_attempts += len(session.exec(
+            select(QuizAttempt).where(QuizAttempt.quiz_id == q.id)
+        ).all())
+
+    # --- Header bar ---
     with ui.row().style(
-        'width: 100%; background: white; padding: 12px 24px; '
-        'align-items: center; justify-content: space-between; '
-        'box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 24px'
+        'width:100%;background:white;padding:16px 24px;'
+        'align-items:center;justify-content:space-between;'
+        'box-shadow:0 1px 3px rgba(0,0,0,0.08);margin-bottom:24px'
     ):
-        ui.label('Lehrer Dashboard').style(
-            'font-size: 16px; font-weight: 500; color: #1A1A18'
-        )
-        with ui.row().style('gap: 8px'):
-            ui.button(
-                'Neues Quiz erstellen',
-                on_click=lambda: ui.navigate.to('/teacher/create')
-            ).style(
-                'background-color: #6B3FA0; color: white; '
-                'border-radius: 5px; font-size: 12px'
+        with ui.column().style('gap:2px'):
+            ui.html(
+                'Learn<span style="color:#185FA5">Loop</span> '
+                '<span style="font-size:13px;color:#666;font-weight:400">'
+                'Teacher</span>'
+            ).style('font-size:18px;font-weight:500')
+            ui.label(f'Welcome back, {username}').style(
+                'font-size:12px;color:#666'
             )
-            ui.button('Abmelden',
+        with ui.row().style('gap:8px'):
+            ui.button('Profile',
+                on_click=lambda: ui.navigate.to('/profile')
+            ).style('font-size:12px')
+            ui.button('Logout',
                 on_click=lambda: ui.navigate.to('/')
-            ).style(
-                'background: transparent; color: #666; font-size: 12px'
-            )
+            ).style('font-size:12px')
 
     with ui.column().style(
-        'max-width: 700px; margin: 0 auto; padding: 0 20px'
+        'max-width:900px;margin:0 auto;padding:0 24px'
     ):
-        ui.label('Meine Quizze').style(
-            'font-size: 20px; font-weight: 500; margin-bottom: 16px'
-        )
-        db = Database()
-        session = db.get_session()
-        quizze = session.exec(
-            select(Quiz).where(Quiz.teacher_id == teacher_id)
-        ).all()
+        # --- Stat cards (total quizzes, questions, attempts) ---
+        with ui.row().style('gap:16px;margin-bottom:28px;width:100%'):
+            for val, label, color in [
+                (str(len(quizzes)), 'Total Quizzes', '#185FA5'),
+                (str(total_questions), 'Total Questions', '#185FA5'),
+                (str(total_attempts), 'Student Attempts', '#185FA5'),
+            ]:
+                with ui.card().style(
+                    'flex:1;padding:20px;border-radius:10px;'
+                    'box-shadow:0 1px 3px rgba(0,0,0,0.06)'
+                ):
+                    ui.label(label).style(
+                        'font-size:12px;color:#666;margin-bottom:6px'
+                    )
+                    ui.label(val).style(
+                        f'font-size:32px;font-weight:500;color:{color}'
+                    )
 
-        # Search input (keeps feature/teacher search/grid layout)
-        search = ui.input(
-            placeholder='Quiz suchen...'
-        ).style(
-            'width:100%;margin-bottom:16px;border-radius:8px;font-size:13px'
-        )
+        # --- Section header with "New Quiz" button ---
+        with ui.row().style(
+            'width:100%;align-items:center;'
+            'justify-content:space-between;margin-bottom:16px'
+        ):
+            ui.label('My Quizzes').style('font-size:20px;font-weight:500')
+            ui.button('+ New Quiz',
+                on_click=lambda: ui.navigate.to('/teacher/create')
+            ).style(
+                'background:#111;color:white;border-radius:8px;font-size:13px'
+            )
 
-        # Quiz cards with references for filtering
-        quiz_refs = {}
+        # Empty state
+        if not quizzes:
+            with ui.card().style(
+                'width:100%;padding:40px;text-align:center;border-radius:12px'
+            ):
+                ui.label('No quizzes created yet.').style('color:#666')
+            return
 
-        with ui.row().style('gap:12px;flex-wrap:wrap') as quiz_grid:
-            for quiz in quizze:
-                with ui.column() as col:
-                    with ui.card().style(
-                        'min-width:280px;flex:1;padding:20px;border-radius:12px'
-                    ):
-                        with ui.row().style(
-                            'width: 100%; justify-content: space-between; align-items: center'
-                        ):
-                            with ui.column():
-                                ui.label(quiz.title).style(
-                                    'font-size: 14px; font-weight: 500; color: #1A1A18'
-                                )
-                                ui.label(quiz.description).style(
-                                    'font-size: 12px; color: #666; margin-top: 2px'
-                                )
-                                sc = '#2AF3DE' if quiz.is_published else '#F1EF8'
-                                tc = '#3B6D11' if quiz.is_published else '#444441'
-                                st = 'Veröffentlicht' if quiz.is_published else 'Entwurf'
-                                ui.label(st).style(
-                                    f'font-size: 11px; font-weight: 500; '
-                                    f'background: {sc}; color: {tc}; '
-                                    f'padding: 2px 8px; border-radius: 20px; margin-top: 6px'
-                                )
-                            with ui.column().style('gap: 6px; align-items: flex-end'):
-                                if not quiz.is_published:
-                                    def publish(q=quiz):
-                                        q.is_published = True
-                                        session.add(q)
-                                        session.commit()
-                                        ui.notify('Quiz veröffentlicht!', color='positive')
-                                        ui.navigate.to('/teacher/dashboard')
-                                    ui.button('Veröffentlichen', on_click=publish).style(
-                                        'background-color: #6B3FA0; color: white; border-radius: 5px; font-size: 12px'
-                                    )
-                                ui.button('Resultate', on_click=lambda q=quiz: ui.navigate.to(f'/teacher/results/{q.id}')).style(
-                                    'background: transparent; border: 1px solid #ccc; border-radius: 5px; font-size: 12px'
-                                )
-                    quiz_refs[quiz.id] = {
-                        'col': col,
-                        'title': quiz.title
+        # --- Quiz cards ---
+        with ui.row().style('gap:16px;flex-wrap:wrap'):
+            for quiz in quizzes:
+                questions = session.exec(
+                    select(Question).where(Question.quiz_id == quiz.id)
+                ).all()
+                attempts = session.exec(
+                    select(QuizAttempt).where(QuizAttempt.quiz_id == quiz.id)
+                ).all()
+
+                # Calculate average score percentage
+                avg_pct = None
+                if attempts:
+                    avg_pct = round(
+                        sum(
+                            a.score / a.max_score * 100
+                            for a in attempts if a.max_score > 0
+                        ) / len(attempts)
+                    )
+
+                with ui.card().style(
+                    'min-width:300px;flex:1;padding:20px;border-radius:12px;'
+                    'box-shadow:0 1px 3px rgba(0,0,0,0.06)'
+                ):
+                    ui.label(quiz.title).style(
+                        'font-size:15px;font-weight:500;color:#1A1A18'
+                    )
+                    ui.label(quiz.description).style(
+                        'font-size:12px;color:#666;margin-top:2px;margin-bottom:10px'
+                    )
+
+                    # Question type badges derived from actual questions
+                    types_used = set(q.question_type for q in questions)
+                    type_map = {
+                        'single': 'Single Choice',
+                        'multiple': 'Multiple Choice',
+                        'truefalse': 'True/False'
                     }
+                    with ui.row().style(
+                        'gap:4px;flex-wrap:wrap;margin-bottom:12px'
+                    ):
+                        for t in types_used:
+                            ui.html(
+                                f'<span style="background:#F0EDE6;color:#666;'
+                                f'padding:3px 8px;border-radius:20px;font-size:10px">'
+                                f'{type_map.get(t, t)}</span>'
+                            )
 
-        # Filter function
-        def filter_quizze():
-            term = search.value.lower()
-            for qid, data in quiz_refs.items():
-                if term in data['title'].lower():
-                    data['col'].style('display:block')
-                else:
-                    data['col'].style('display:none')
+                    # Stats row: questions / attempts / average
+                    with ui.row().style(
+                        'width:100%;justify-content:space-between;'
+                        'padding:10px 0;border-top:0.5px solid #E5E5E5;'
+                        'border-bottom:0.5px solid #E5E5E5;margin-bottom:12px'
+                    ):
+                        ui.label(f'{len(questions)} Questions').style(
+                            'font-size:12px;color:#666'
+                        )
+                        ui.label(f'{len(attempts)} Attempts').style(
+                            'font-size:12px;color:#666'
+                        )
+                        if avg_pct is not None:
+                            ui.label(f'{avg_pct}% Ø').style(
+                                'font-size:12px;font-weight:500;color:#3B6D11'
+                            )
+                        else:
+                            ui.label('-').style('font-size:12px;color:#999')
 
-        search.on('input', filter_quizze)
+                    # Action buttons: results + publish/status
+                    with ui.row().style('gap:8px;align-items:center'):
+                        ui.button('Results',
+                            on_click=lambda q=quiz:
+                                ui.navigate.to(f'/teacher/results/{q.id}')
+                        ).style(
+                            'flex:1;background:white;color:#1A1A18;'
+                            'border:1.5px solid #E5E5E5;border-radius:6px;font-size:12px'
+                        )
+
+                        if quiz.is_published:
+                            ui.html(
+                                '<span style="background:#D4EDDA;color:#3B6D11;'
+                                'padding:5px 12px;border-radius:20px;font-size:11px;'
+                                'font-weight:500">Published</span>'
+                            )
+                        else:
+                            def publish(q=quiz):
+                                """Publish the quiz so students can see it."""
+                                q.is_published = True
+                                session.add(q)
+                                session.commit()
+                                ui.notify('Quiz published!', color='positive')
+                                ui.navigate.to('/teacher/dashboard')
+
+                            ui.button('Publish',
+                                on_click=publish
+                            ).style(
+                                'background:white;color:#1A1A18;'
+                                'border:1.5px solid #E5E5E5;border-radius:6px;font-size:12px'
+                            )
+                            ui.html(
+                                '<span style="background:#F0EDE6;color:#666;'
+                                'padding:5px 12px;border-radius:20px;font-size:11px">'
+                                'Draft</span>'
+                            )
