@@ -44,41 +44,39 @@ def results_page(attempt_id: int):
 
     ui.add_head_html("""
     <style>
-        * {
-            box-sizing: border-box;
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: #F5F5F3 !important;
         }
 
-        body {
-            margin: 0;
-            padding: 0;
-        }
-
-        .results-container {
+        .nicegui-container {
+            background-color: #F5F5F3 !important;
+            padding: 0 !important;
             width: 100%;
-            min-height: 100vh;
-            background-color: #F5F5F3;
-            padding: 24px 48px;
         }
 
-        .results-wrapper {
+        .results-shell {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 40px 48px;
+            background-color: #F5F5F3;
         }
 
-        .results-page-card {
+        .results-card {
             background: #ffffff;
-            border: 1px solid #e5e5e0;
+            border: 1px solid #dfdfdb;
             border-radius: 24px;
             overflow: hidden;
-            box-shadow: none;
+            box-shadow: none !important;
         }
 
         .results-header {
             display: flex;
             align-items: center;
-            gap: 24px;
-            padding: 32px 40px;
+            gap: 20px;
+            padding: 32px 48px;
             border-bottom: 1px solid #e8e8e3;
             background: #ffffff;
         }
@@ -87,151 +85,135 @@ def results_page(attempt_id: int):
             border: 1px solid #d0d0cb !important;
             border-radius: 12px !important;
             background: #ffffff !important;
-            color: #171717 !important;
+            color: #000000 !important;
             font-size: 16px !important;
             font-weight: 500 !important;
-            padding: 10px 16px !important;
+            padding: 10px 18px !important;
             box-shadow: none !important;
             white-space: nowrap;
             cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .back-btn:hover {
-            background: #f5f5f5 !important;
+            flex-shrink: 0;
         }
 
         .header-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #171717;
-            margin: 0;
+            font-size: 28px !important;
+            font-weight: 700 !important;
+            color: #000000 !important;
+            margin: 0 !important;
         }
 
-        .results-content-bg {
+        .results-content {
             background: #fafaf8;
-            padding: 48px 40px;
+            padding: 48px;
         }
 
-        .result-main-card {
-            width: 100%;
-            padding: 48px 40px;
+        .main-result-card {
             background: #ffffff;
-            border: 1px solid #e5e5e0;
-            border-radius: 20px;
-            box-shadow: none;
+            border: 1px solid #dfdfdb;
+            border-radius: 22px;
+            padding: 48px 40px;
             margin-bottom: 32px;
+            box-shadow: none !important;
         }
 
-        .percentage-display {
-            font-size: 120px;
+        .percentage {
+            font-size: 120px !important;
+            font-weight: 700 !important;
+            text-align: center;
             line-height: 1;
-            font-weight: 700;
-            text-align: center;
-            width: 100%;
-            margin-bottom: 16px;
+            margin: 0 0 16px 0 !important;
         }
 
-        .quiz-title {
-            font-size: 28px;
-            font-weight: 700;
+        .quiz-name {
+            font-size: 28px !important;
+            font-weight: 700 !important;
             text-align: center;
-            color: #171717;
-            width: 100%;
-            margin-bottom: 8px;
+            color: #000000 !important;
+            margin: 0 0 8px 0 !important;
         }
 
-        .feedback-text {
-            font-size: 18px;
-            color: #7a7a7a;
+        .feedback-msg {
+            font-size: 18px !important;
+            color: #777777 !important;
             text-align: center;
-            width: 100%;
-            margin-bottom: 32px;
+            margin: 0 0 32px 0 !important;
         }
 
-        .stats-grid {
+        .stats-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             margin-bottom: 32px;
         }
 
-        .mini-stat-card {
-            border: 1px solid #e5e5e0;
-            border-radius: 16px;
+        .stat-box {
             background: #ffffff;
+            border: 1px solid #dfdfdb;
+            border-radius: 16px;
             padding: 28px 20px;
             text-align: center;
+            box-shadow: none !important;
         }
 
-        .stat-label {
-            font-size: 16px;
-            color: #505050;
-            text-align: center;
-            width: 100%;
-            margin-bottom: 12px;
+        .stat-box-label {
+            font-size: 16px !important;
+            color: #555555 !important;
+            margin: 0 0 12px 0 !important;
             font-weight: 500;
         }
 
-        .stat-value {
-            font-size: 48px;
-            font-weight: 700;
-            text-align: center;
-            width: 100%;
+        .stat-box-value {
+            font-size: 48px !important;
+            font-weight: 700 !important;
+            margin: 0 !important;
         }
 
-        .action-grid {
+        .action-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
         }
 
-        .secondary-btn {
-            width: 100%;
+        .action-btn {
             border: 1px solid #d0d0cb !important;
             border-radius: 14px !important;
             background: #ffffff !important;
-            color: #171717 !important;
+            color: #000000 !important;
             font-size: 16px !important;
             font-weight: 500 !important;
             padding: 14px 20px !important;
             box-shadow: none !important;
             cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .secondary-btn:hover {
-            background: #f5f5f5 !important;
+            width: 100%;
         }
 
         .detail-card {
-            width: 100%;
-            border: 1px solid #e5e5e0;
-            border-radius: 20px;
             background: #ffffff;
+            border: 1px solid #dfdfdb;
+            border-radius: 22px;
             padding: 32px 40px;
-            box-shadow: none;
+            box-shadow: none !important;
         }
 
         .detail-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #171717;
-            margin-bottom: 28px;
+            font-size: 24px !important;
+            font-weight: 700 !important;
+            color: #000000 !important;
+            margin: 0 0 28px 0 !important;
         }
 
-        .detail-row {
+        .question-item {
             display: flex;
-            align-items: flex-start;
             gap: 20px;
             padding: 24px 0;
+            align-items: flex-start;
         }
 
-        .detail-row:not(:last-child) {
+        .question-item:not(:last-child) {
             border-bottom: 1px solid #f0f0ed;
         }
 
-        .detail-icon-circle {
+        .icon-circle {
             width: 40px;
             height: 40px;
             border-radius: 50%;
@@ -244,124 +226,111 @@ def results_page(attempt_id: int):
             border: 2px solid;
         }
 
-        .question-content {
+        .question-details {
             flex: 1;
-            width: 100%;
         }
 
         .question-text {
-            font-size: 18px;
-            font-weight: 700;
-            color: #171717;
-            margin-bottom: 8px;
+            font-size: 18px !important;
+            font-weight: 700 !important;
+            color: #000000 !important;
+            margin: 0 0 8px 0 !important;
             line-height: 1.4;
         }
 
-        .answer-text {
-            font-size: 16px;
-            margin-bottom: 4px;
+        .student-answer {
+            font-size: 16px !important;
+            margin: 0 0 4px 0 !important;
             line-height: 1.4;
         }
 
-        .correct-answer-text {
-            font-size: 16px;
-            color: #7a7a7a;
+        .correct-answer {
+            font-size: 16px !important;
+            color: #777777 !important;
+            margin: 0 !important;
             line-height: 1.4;
         }
 
-        @media (max-width: 768px) {
-            .results-container {
-                padding: 16px 20px;
+        @media (max-width: 900px) {
+            .results-shell {
+                padding: 20px 20px;
             }
 
             .results-header {
                 flex-direction: column;
                 align-items: flex-start;
                 padding: 20px;
-                gap: 16px;
             }
 
-            .results-content-bg {
-                padding: 24px 20px;
+            .results-content {
+                padding: 20px;
             }
 
-            .result-main-card {
+            .main-result-card {
                 padding: 28px 20px;
-                margin-bottom: 24px;
             }
 
-            .percentage-display {
-                font-size: 80px;
-                margin-bottom: 12px;
+            .percentage {
+                font-size: 80px !important;
             }
 
-            .quiz-title {
-                font-size: 22px;
-            }
-
-            .stats-grid {
+            .stats-container {
                 grid-template-columns: 1fr;
                 gap: 12px;
-                margin-bottom: 24px;
             }
 
-            .action-grid {
+            .action-buttons {
                 grid-template-columns: 1fr;
-                gap: 12px;
             }
 
             .detail-card {
                 padding: 20px;
-                border-radius: 16px;
-            }
-
-            .detail-row {
-                gap: 12px;
-                padding: 16px 0;
-            }
-
-            .detail-icon-circle {
-                width: 36px;
-                height: 36px;
-                font-size: 18px;
             }
         }
     </style>
     """)
 
-    with ui.column().classes('results-container'):
-        with ui.column().classes('results-wrapper'):
-            with ui.card().classes('results-page-card'):
+    # Main container
+    main_container = ui.column().style('width: 100%; background-color: #F5F5F3; padding: 0; margin: 0')
 
+    with main_container:
+        with ui.column().classes('results-shell'):
+            # Card wrapper
+            with ui.card().classes('results-card').style('box-shadow: none'):
+                # Header
                 with ui.row().classes('results-header'):
                     ui.button('← Zurück', on_click=lambda: ui.navigate.to('/student/dashboard')).classes('back-btn')
                     ui.label('Ergebnis').classes('header-title')
 
-                with ui.column().classes('results-content-bg'):
+                # Content area
+                with ui.column().classes('results-content'):
+                    # Main result card
+                    with ui.card().classes('main-result-card').style('box-shadow: none'):
+                        ui.label(f'{pct}%').classes('percentage').style(f'color: {pct_color}')
+                        ui.label(quiz_title).classes('quiz-name')
+                        ui.label(feedback).classes('feedback-msg')
 
-                    with ui.card().classes('result-main-card'):
-                        ui.label(f'{pct}%').classes('percentage-display').style(f'color: {pct_color}')
-                        ui.label(quiz_title).classes('quiz-title')
-                        ui.label(feedback).classes('feedback-text')
+                        # Stats grid
+                        with ui.element('div').classes('stats-container'):
+                            with ui.element('div').classes('stat-box').style('box-shadow: none'):
+                                ui.label('Richtig').classes('stat-box-label')
+                                ui.label(str(correct_count)).classes('stat-box-value').style('color: #3E7B12')
 
-                        with ui.element('div').classes('stats-grid'):
-                            with ui.element('div').classes('mini-stat-card'):
-                                ui.label('Richtig').classes('stat-label')
-                                ui.label(str(correct_count)).classes('stat-value').style('color: #3E7B12')
+                            with ui.element('div').classes('stat-box').style('box-shadow: none'):
+                                ui.label('Falsch').classes('stat-box-label')
+                                ui.label(str(wrong_count)).classes('stat-box-value').style('color: #B53939')
 
-                            with ui.element('div').classes('mini-stat-card'):
-                                ui.label('Falsch').classes('stat-label')
-                                ui.label(str(wrong_count)).classes('stat-value').style('color: #B53939')
+                            with ui.element('div').classes('stat-box').style('box-shadow: none'):
+                                ui.label('Gesamt').classes('stat-box-label')
+                                ui.label(str(max_score)).classes('stat-box-value').style('color: #000000')
 
-                            with ui.element('div').classes('mini-stat-card'):
-                                ui.label('Gesamt').classes('stat-label')
-                                ui.label(str(max_score)).classes('stat-value').style('color: #171717')
+                        # Action buttons
+                        with ui.element('div').classes('action-buttons'):
+                            ui.button('⌂ Dashboard', on_click=lambda: ui.navigate.to('/student/dashboard')).classes('action-btn')
+                            ui.button('↺ Nochmal', on_click=lambda: ui.navigate.to(f'/student/quiz/{attempt.quiz_id}')).classes('action-btn')
 
-                        with ui.element('div').classes('action-grid'):
-                            ui.button('⌂ Dashboard', on_click=lambda: ui.navigate.to('/student/dashboard')).classes('secondary-btn')
-                            ui.button('↺ Nochmal', on_click=lambda: ui.navigate.to(f'/student/quiz/{attempt.quiz_id}')).classes('secondary-btn')
-
-                    with ui.card().classes('detail-card'):
+                    # Detail card
+                    with ui.card().classes('detail-card').style('box-shadow: none'):
                         ui.label('Detailauswertung').classes('detail-title')
 
                         for sa in student_answers:
@@ -381,19 +350,19 @@ def results_page(attempt_id: int):
                             icon_bg = '#EDF6E5' if is_correct else '#FBEAEA'
                             answer_color = '#3E7B12' if is_correct else '#B53939'
 
-                            with ui.element('div').classes('detail-row'):
-                                with ui.element('div').classes('detail-icon-circle').style(
-                                    f'color: {icon_color}; background: {icon_bg}; border-color: {icon_color};'
+                            with ui.element('div').classes('question-item'):
+                                with ui.element('div').classes('icon-circle').style(
+                                    f'background-color: {icon_bg}; border-color: {icon_color}; color: {icon_color}'
                                 ):
-                                    ui.label(icon_symbol)
+                                    ui.label(icon_symbol).style('margin: 0; padding: 0')
 
-                                with ui.column().classes('question-content'):
+                                with ui.column().classes('question-details').style('gap: 2px'):
                                     ui.label(question.text if question else 'Frage').classes('question-text')
                                     ui.label(
                                         f'Deine Antwort: {selected_option.text if selected_option else "-"}'
-                                    ).classes('answer-text').style(f'color: {answer_color}')
+                                    ).classes('student-answer').style(f'color: {answer_color}')
 
                                     if not is_correct and correct_option:
-                                        ui.label(f'Richtig: {correct_option.text}').classes('correct-answer-text')
+                                        ui.label(f'Richtig: {correct_option.text}').classes('correct-answer')
 
     session.close()
