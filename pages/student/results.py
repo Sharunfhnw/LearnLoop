@@ -44,16 +44,31 @@ def results_page(attempt_id: int):
 
     ui.add_head_html("""
     <style>
-        .results-shell {
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .results-container {
             width: 100%;
-            max-width: 1280px;
+            min-height: 100vh;
+            background-color: #F5F5F3;
+            padding: 24px 48px;
+        }
+
+        .results-wrapper {
+            width: 100%;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 0 22px 42px 22px;
         }
 
         .results-page-card {
             background: #ffffff;
-            border: 1px solid #dfdfdb;
+            border: 1px solid #e5e5e0;
             border-radius: 24px;
             overflow: hidden;
             box-shadow: none;
@@ -62,224 +77,323 @@ def results_page(attempt_id: int):
         .results-header {
             display: flex;
             align-items: center;
-            gap: 18px;
-            padding: 28px 40px;
+            gap: 24px;
+            padding: 32px 40px;
             border-bottom: 1px solid #e8e8e3;
             background: #ffffff;
         }
 
-        .results-content-bg {
-            background: #f3f3f1;
-            padding: 42px;
-        }
-
         .back-btn {
-            border: 1px solid #d7d7d1 !important;
-            border-radius: 16px !important;
+            border: 1px solid #d0d0cb !important;
+            border-radius: 12px !important;
             background: #ffffff !important;
             color: #171717 !important;
-            font-size: 18px !important;
+            font-size: 16px !important;
             font-weight: 500 !important;
-            padding: 14px 26px !important;
+            padding: 10px 16px !important;
             box-shadow: none !important;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: #f5f5f5 !important;
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #171717;
+            margin: 0;
+        }
+
+        .results-content-bg {
+            background: #fafaf8;
+            padding: 48px 40px;
         }
 
         .result-main-card {
             width: 100%;
-            max-width: 980px;
-            margin: 0 auto 30px auto;
-            padding: 46px 36px 30px 36px;
+            padding: 48px 40px;
             background: #ffffff;
-            border: 1px solid #dfdfdb;
-            border-radius: 22px;
+            border: 1px solid #e5e5e0;
+            border-radius: 20px;
             box-shadow: none;
+            margin-bottom: 32px;
+        }
+
+        .percentage-display {
+            font-size: 120px;
+            line-height: 1;
+            font-weight: 700;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .quiz-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            color: #171717;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .feedback-text {
+            font-size: 18px;
+            color: #7a7a7a;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 32px;
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 18px;
-            margin-top: 30px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
         }
 
         .mini-stat-card {
-            border: 1px solid #dfdfdb;
-            border-radius: 18px;
+            border: 1px solid #e5e5e0;
+            border-radius: 16px;
             background: #ffffff;
-            padding: 26px 20px;
+            padding: 28px 20px;
             text-align: center;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            color: #505050;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: 700;
+            text-align: center;
+            width: 100%;
         }
 
         .action-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            margin-top: 10px;
         }
 
         .secondary-btn {
             width: 100%;
-            border: 1px solid #d7d7d1 !important;
-            border-radius: 16px !important;
+            border: 1px solid #d0d0cb !important;
+            border-radius: 14px !important;
             background: #ffffff !important;
             color: #171717 !important;
-            font-size: 18px !important;
+            font-size: 16px !important;
             font-weight: 500 !important;
-            padding: 16px 22px !important;
+            padding: 14px 20px !important;
             box-shadow: none !important;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .secondary-btn:hover {
+            background: #f5f5f5 !important;
         }
 
         .detail-card {
             width: 100%;
-            border: 1px solid #dfdfdb;
-            border-radius: 22px;
+            border: 1px solid #e5e5e0;
+            border-radius: 20px;
             background: #ffffff;
-            padding: 30px 32px;
+            padding: 32px 40px;
             box-shadow: none;
+        }
+
+        .detail-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #171717;
+            margin-bottom: 28px;
         }
 
         .detail-row {
             display: flex;
             align-items: flex-start;
-            gap: 18px;
-            padding: 20px 0;
+            gap: 20px;
+            padding: 24px 0;
         }
 
-        .detail-divider {
-            border-top: 1px solid #ecece7;
+        .detail-row:not(:last-child) {
+            border-bottom: 1px solid #f0f0ed;
         }
 
         .detail-icon-circle {
-            width: 34px;
-            height: 34px;
-            border-radius: 999px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
             flex-shrink: 0;
-            margin-top: 2px;
+            border: 2px solid;
         }
 
-        @media (max-width: 900px) {
-            .stats-grid,
-            .action-grid {
-                grid-template-columns: 1fr;
+        .question-content {
+            flex: 1;
+            width: 100%;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 700;
+            color: #171717;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .answer-text {
+            font-size: 16px;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .correct-answer-text {
+            font-size: 16px;
+            color: #7a7a7a;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .results-container {
+                padding: 16px 20px;
             }
 
             .results-header {
                 flex-direction: column;
                 align-items: flex-start;
+                padding: 20px;
+                gap: 16px;
             }
 
             .results-content-bg {
-                padding: 20px;
+                padding: 24px 20px;
             }
 
             .result-main-card {
-                padding: 28px 18px 22px 18px;
+                padding: 28px 20px;
+                margin-bottom: 24px;
+            }
+
+            .percentage-display {
+                font-size: 80px;
+                margin-bottom: 12px;
+            }
+
+            .quiz-title {
+                font-size: 22px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 24px;
+            }
+
+            .action-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .detail-card {
+                padding: 20px;
+                border-radius: 16px;
+            }
+
+            .detail-row {
+                gap: 12px;
+                padding: 16px 0;
+            }
+
+            .detail-icon-circle {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
             }
         }
     </style>
     """)
 
-    with ui.column().classes('results-shell'):
-        with ui.card().classes('results-page-card'):
+    with ui.column().classes('results-container'):
+        with ui.column().classes('results-wrapper'):
+            with ui.card().classes('results-page-card'):
 
-            with ui.row().classes('results-header'):
-                ui.button('← Zurück', on_click=lambda: ui.navigate.to('/student/dashboard')).classes('back-btn')
-                ui.label('Ergebnis').style('font-size: 26px; font-weight: 700; color: #111;')
+                with ui.row().classes('results-header'):
+                    ui.button('← Zurück', on_click=lambda: ui.navigate.to('/student/dashboard')).classes('back-btn')
+                    ui.label('Ergebnis').classes('header-title')
 
-            with ui.column().classes('results-content-bg'):
+                with ui.column().classes('results-content-bg'):
 
-                with ui.card().classes('result-main-card'):
-                    ui.label(f'{pct}%').style(
-                        f'font-size: 104px; line-height: 1; font-weight: 700; text-align: center; color: {pct_color}; width: 100%;'
-                    )
-                    ui.label(quiz_title).style(
-                        'font-size: 26px; font-weight: 700; text-align: center; color: #111; margin-top: 10px; width: 100%;'
-                    )
-                    ui.label(feedback).style(
-                        'font-size: 20px; color: #6b6b6b; text-align: center; width: 100%; margin-top: 4px;'
-                    )
+                    with ui.card().classes('result-main-card'):
+                        ui.label(f'{pct}%').classes('percentage-display').style(f'color: {pct_color}')
+                        ui.label(quiz_title).classes('quiz-title')
+                        ui.label(feedback).classes('feedback-text')
 
-                    with ui.element('div').classes('stats-grid'):
-                        with ui.element('div').classes('mini-stat-card'):
-                            ui.label('Richtig').style(
-                                'font-size: 18px; color: #2c2c2c; text-align: center; width: 100%;'
-                            )
-                            ui.label(str(correct_count)).style(
-                                'font-size: 42px; font-weight: 700; color: #3E7B12; text-align: center; width: 100%; margin-top: 8px;'
-                            )
+                        with ui.element('div').classes('stats-grid'):
+                            with ui.element('div').classes('mini-stat-card'):
+                                ui.label('Richtig').classes('stat-label')
+                                ui.label(str(correct_count)).classes('stat-value').style('color: #3E7B12')
 
-                        with ui.element('div').classes('mini-stat-card'):
-                            ui.label('Falsch').style(
-                                'font-size: 18px; color: #2c2c2c; text-align: center; width: 100%;'
-                            )
-                            ui.label(str(wrong_count)).style(
-                                'font-size: 42px; font-weight: 700; color: #B53939; text-align: center; width: 100%; margin-top: 8px;'
-                            )
+                            with ui.element('div').classes('mini-stat-card'):
+                                ui.label('Falsch').classes('stat-label')
+                                ui.label(str(wrong_count)).classes('stat-value').style('color: #B53939')
 
-                        with ui.element('div').classes('mini-stat-card'):
-                            ui.label('Gesamt').style(
-                                'font-size: 18px; color: #2c2c2c; text-align: center; width: 100%;'
-                            )
-                            ui.label(str(max_score)).style(
-                                'font-size: 42px; font-weight: 700; color: #111; text-align: center; width: 100%; margin-top: 8px;'
-                            )
+                            with ui.element('div').classes('mini-stat-card'):
+                                ui.label('Gesamt').classes('stat-label')
+                                ui.label(str(max_score)).classes('stat-value').style('color: #171717')
 
-                    with ui.element('div').classes('action-grid'):
-                        ui.button('⌂ Dashboard', on_click=lambda: ui.navigate.to('/student/dashboard')).classes('secondary-btn')
-                        ui.button('↺ Nochmal', on_click=lambda: ui.navigate.to(f'/student/quiz/{attempt.quiz_id}')).classes('secondary-btn')
+                        with ui.element('div').classes('action-grid'):
+                            ui.button('⌂ Dashboard', on_click=lambda: ui.navigate.to('/student/dashboard')).classes('secondary-btn')
+                            ui.button('↺ Nochmal', on_click=lambda: ui.navigate.to(f'/student/quiz/{attempt.quiz_id}')).classes('secondary-btn')
 
-                with ui.card().classes('detail-card'):
-                    ui.label('Detailauswertung').style(
-                        'font-size: 24px; font-weight: 700; color: #111; margin-bottom: 10px;'
-                    )
+                    with ui.card().classes('detail-card'):
+                        ui.label('Detailauswertung').classes('detail-title')
 
-                    for index, sa in enumerate(student_answers):
-                        question = session.get(Question, sa.question_id)
-                        selected_option = session.get(AnswerOption, sa.selected_answer_option_id)
+                        for sa in student_answers:
+                            question = session.get(Question, sa.question_id)
+                            selected_option = session.get(AnswerOption, sa.selected_answer_option_id)
 
-                        correct_option = session.exec(
-                            select(AnswerOption).where(
-                                AnswerOption.question_id == sa.question_id,
-                                AnswerOption.is_correct == True,
-                            )
-                        ).first()
-
-                        is_correct = bool(sa.is_correct)
-                        icon_symbol = '✓' if is_correct else '✕'
-                        icon_color = '#3E7B12' if is_correct else '#B53939'
-                        icon_bg = '#EDF6E5' if is_correct else '#FBEAEA'
-                        answer_color = '#3E7B12' if is_correct else '#B53939'
-
-                        if index > 0:
-                            ui.separator().classes('detail-divider')
-
-                        with ui.element('div').classes('detail-row'):
-                            with ui.element('div').classes('detail-icon-circle').style(
-                                f'color: {icon_color}; background: {icon_bg}; border: 2px solid {icon_color};'
-                            ):
-                                ui.label(icon_symbol).style(
-                                    f'font-size: 18px; font-weight: 700; color: {icon_color}; margin: 0;'
+                            correct_option = session.exec(
+                                select(AnswerOption).where(
+                                    AnswerOption.question_id == sa.question_id,
+                                    AnswerOption.is_correct == True,
                                 )
+                            ).first()
 
-                            with ui.column().style('gap: 2px; width: 100%;'):
-                                ui.label(question.text if question else 'Frage').style(
-                                    'font-size: 20px; font-weight: 700; color: #111;'
-                                )
-                                ui.label(
-                                    f'Deine Antwort: {selected_option.text if selected_option else "-"}'
-                                ).style(
-                                    f'font-size: 17px; color: {answer_color};'
-                                )
+                            is_correct = bool(sa.is_correct)
+                            icon_symbol = '✓' if is_correct else '✕'
+                            icon_color = '#3E7B12' if is_correct else '#B53939'
+                            icon_bg = '#EDF6E5' if is_correct else '#FBEAEA'
+                            answer_color = '#3E7B12' if is_correct else '#B53939'
 
-                                if not is_correct and correct_option:
-                                    ui.label(f'Richtig: {correct_option.text}').style(
-                                        'font-size: 17px; color: #5f5f5f;'
-                                    )
+                            with ui.element('div').classes('detail-row'):
+                                with ui.element('div').classes('detail-icon-circle').style(
+                                    f'color: {icon_color}; background: {icon_bg}; border-color: {icon_color};'
+                                ):
+                                    ui.label(icon_symbol)
+
+                                with ui.column().classes('question-content'):
+                                    ui.label(question.text if question else 'Frage').classes('question-text')
+                                    ui.label(
+                                        f'Deine Antwort: {selected_option.text if selected_option else "-"}'
+                                    ).classes('answer-text').style(f'color: {answer_color}')
+
+                                    if not is_correct and correct_option:
+                                        ui.label(f'Richtig: {correct_option.text}').classes('correct-answer-text')
 
     session.close()
