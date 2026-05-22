@@ -5,7 +5,7 @@ from data_access.db import Database
 from domain.models import QuizAttempt, Quiz, StudentAnswer, Question, AnswerOption
 
 
-def results_page(attempt_id: int) -> None:
+def results_page(attempt_id: int):
     ui.query('body').style('background-color: #F5F5F3')
 
     db = Database()
@@ -15,6 +15,7 @@ def results_page(attempt_id: int) -> None:
     if not attempt:
         ui.notify('Ergebnis nicht gefunden', color='negative')
         ui.navigate.to('/student/dashboard')
+        session.close()
         return
 
     quiz = session.get(Quiz, attempt.quiz_id)
@@ -44,15 +45,16 @@ def results_page(attempt_id: int) -> None:
     ui.add_head_html("""
     <style>
         .results-shell {
-            max-width: 1240px;
+            width: 100%;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 0 18px 36px 18px;
+            padding: 0 22px 42px 22px;
         }
 
         .results-page-card {
             background: #ffffff;
             border: 1px solid #dfdfdb;
-            border-radius: 20px;
+            border-radius: 24px;
             overflow: hidden;
             box-shadow: none;
         }
@@ -61,14 +63,14 @@ def results_page(attempt_id: int) -> None:
             display: flex;
             align-items: center;
             gap: 18px;
-            padding: 26px 38px;
+            padding: 28px 40px;
             border-bottom: 1px solid #e8e8e3;
             background: #ffffff;
         }
 
         .results-content-bg {
             background: #f3f3f1;
-            padding: 38px;
+            padding: 42px;
         }
 
         .back-btn {
@@ -76,17 +78,17 @@ def results_page(attempt_id: int) -> None:
             border-radius: 16px !important;
             background: #ffffff !important;
             color: #171717 !important;
-            font-size: 20px !important;
+            font-size: 18px !important;
             font-weight: 500 !important;
-            padding: 14px 28px !important;
+            padding: 14px 26px !important;
             box-shadow: none !important;
         }
 
         .result-main-card {
             width: 100%;
-            max-width: 920px;
-            margin: 0 auto 28px auto;
-            padding: 42px 34px 30px 34px;
+            max-width: 980px;
+            margin: 0 auto 30px auto;
+            padding: 46px 36px 30px 36px;
             background: #ffffff;
             border: 1px solid #dfdfdb;
             border-radius: 22px;
@@ -97,7 +99,7 @@ def results_page(attempt_id: int) -> None:
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 18px;
-            margin-top: 28px;
+            margin-top: 30px;
             margin-bottom: 24px;
         }
 
@@ -105,7 +107,7 @@ def results_page(attempt_id: int) -> None:
             border: 1px solid #dfdfdb;
             border-radius: 18px;
             background: #ffffff;
-            padding: 24px 20px;
+            padding: 26px 20px;
             text-align: center;
         }
 
@@ -122,7 +124,7 @@ def results_page(attempt_id: int) -> None:
             border-radius: 16px !important;
             background: #ffffff !important;
             color: #171717 !important;
-            font-size: 20px !important;
+            font-size: 18px !important;
             font-weight: 500 !important;
             padding: 16px 22px !important;
             box-shadow: none !important;
@@ -133,7 +135,7 @@ def results_page(attempt_id: int) -> None:
             border: 1px solid #dfdfdb;
             border-radius: 22px;
             background: #ffffff;
-            padding: 28px 30px;
+            padding: 30px 32px;
             box-shadow: none;
         }
 
@@ -141,7 +143,7 @@ def results_page(attempt_id: int) -> None:
             display: flex;
             align-items: flex-start;
             gap: 18px;
-            padding: 18px 0;
+            padding: 20px 0;
         }
 
         .detail-divider {
@@ -149,8 +151,8 @@ def results_page(attempt_id: int) -> None:
         }
 
         .detail-icon-circle {
-            width: 32px;
-            height: 32px;
+            width: 34px;
+            height: 34px;
             border-radius: 999px;
             display: flex;
             align-items: center;
@@ -173,11 +175,11 @@ def results_page(attempt_id: int) -> None:
             }
 
             .results-content-bg {
-                padding: 18px;
+                padding: 20px;
             }
 
             .result-main-card {
-                padding: 26px 18px 22px 18px;
+                padding: 28px 18px 22px 18px;
             }
         }
     </style>
@@ -188,16 +190,16 @@ def results_page(attempt_id: int) -> None:
 
             with ui.row().classes('results-header'):
                 ui.button('← Zurück', on_click=lambda: ui.navigate.to('/student/dashboard')).classes('back-btn')
-                ui.label('Ergebnis').style('font-size: 28px; font-weight: 700; color: #111;')
+                ui.label('Ergebnis').style('font-size: 26px; font-weight: 700; color: #111;')
 
             with ui.column().classes('results-content-bg'):
 
                 with ui.card().classes('result-main-card'):
                     ui.label(f'{pct}%').style(
-                        f'font-size: 96px; line-height: 1; font-weight: 700; text-align: center; color: {pct_color}; width: 100%;'
+                        f'font-size: 104px; line-height: 1; font-weight: 700; text-align: center; color: {pct_color}; width: 100%;'
                     )
                     ui.label(quiz_title).style(
-                        'font-size: 28px; font-weight: 700; text-align: center; color: #111; margin-top: 8px; width: 100%;'
+                        'font-size: 26px; font-weight: 700; text-align: center; color: #111; margin-top: 10px; width: 100%;'
                     )
                     ui.label(feedback).style(
                         'font-size: 20px; color: #6b6b6b; text-align: center; width: 100%; margin-top: 4px;'
@@ -209,7 +211,7 @@ def results_page(attempt_id: int) -> None:
                                 'font-size: 18px; color: #2c2c2c; text-align: center; width: 100%;'
                             )
                             ui.label(str(correct_count)).style(
-                                'font-size: 40px; font-weight: 700; color: #3E7B12; text-align: center; width: 100%; margin-top: 8px;'
+                                'font-size: 42px; font-weight: 700; color: #3E7B12; text-align: center; width: 100%; margin-top: 8px;'
                             )
 
                         with ui.element('div').classes('mini-stat-card'):
@@ -217,7 +219,7 @@ def results_page(attempt_id: int) -> None:
                                 'font-size: 18px; color: #2c2c2c; text-align: center; width: 100%;'
                             )
                             ui.label(str(wrong_count)).style(
-                                'font-size: 40px; font-weight: 700; color: #B53939; text-align: center; width: 100%; margin-top: 8px;'
+                                'font-size: 42px; font-weight: 700; color: #B53939; text-align: center; width: 100%; margin-top: 8px;'
                             )
 
                         with ui.element('div').classes('mini-stat-card'):
@@ -225,7 +227,7 @@ def results_page(attempt_id: int) -> None:
                                 'font-size: 18px; color: #2c2c2c; text-align: center; width: 100%;'
                             )
                             ui.label(str(max_score)).style(
-                                'font-size: 40px; font-weight: 700; color: #111; text-align: center; width: 100%; margin-top: 8px;'
+                                'font-size: 42px; font-weight: 700; color: #111; text-align: center; width: 100%; margin-top: 8px;'
                             )
 
                     with ui.element('div').classes('action-grid'):
@@ -234,7 +236,7 @@ def results_page(attempt_id: int) -> None:
 
                 with ui.card().classes('detail-card'):
                     ui.label('Detailauswertung').style(
-                        'font-size: 22px; font-weight: 700; color: #111; margin-bottom: 8px;'
+                        'font-size: 24px; font-weight: 700; color: #111; margin-bottom: 10px;'
                     )
 
                     for index, sa in enumerate(student_answers):
@@ -267,17 +269,17 @@ def results_page(attempt_id: int) -> None:
 
                             with ui.column().style('gap: 2px; width: 100%;'):
                                 ui.label(question.text if question else 'Frage').style(
-                                    'font-size: 18px; font-weight: 700; color: #111;'
+                                    'font-size: 20px; font-weight: 700; color: #111;'
                                 )
                                 ui.label(
                                     f'Deine Antwort: {selected_option.text if selected_option else "-"}'
                                 ).style(
-                                    f'font-size: 16px; color: {answer_color};'
+                                    f'font-size: 17px; color: {answer_color};'
                                 )
 
                                 if not is_correct and correct_option:
                                     ui.label(f'Richtig: {correct_option.text}').style(
-                                        'font-size: 16px; color: #5f5f5f;'
+                                        'font-size: 17px; color: #5f5f5f;'
                                     )
 
     session.close()
