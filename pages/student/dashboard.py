@@ -1,127 +1,133 @@
 from nicegui import ui, app
+from sqlmodel import select
 from data_access.db import Database
+from domain.models import Question
 from services.quiz_service import QuizService
 from services.attempt_service import AttemptService
 
 
 def student_dashboard():
-    ui.query('body').style('background-color:#F5F5F7;margin:0')
+    """Render the student dashboard page."""
+    ui.query('body').style('background-color:#F8F7F4;margin:0')
+
     quiz_service = QuizService()
     attempt_service = AttemptService()
 
+    db = Database()
+    session = db.get_session()
+    student_id = app.storage.user.get('user_id', 1)
+    username = app.storage.user.get('username', '')
+
+    # Load data for stat cards
+    quizzes = quiz_service.get_published(session)
+    attempts = attempt_service.get_attempts_by_student(session, student_id)
+    avg = attempt_service.get_average(attempts)
+
+    # --- Header bar ---
     with ui.row().style(
         'width:100%;background:white;padding:16px 24px;'
         'align-items:center;justify-content:space-between;'
-        'border-bottom:0.5px solid #E5E5E5;margin-bottom:24px'
+        'box-shadow:0 1px 3px rgba(0,0,0,0.08);margin-bottom:24px'
     ):
         with ui.column().style('gap:2px'):
             ui.html(
                 'Learn<span style="color:#185FA5">Loop</span> '
                 '<span style="font-size:13px;color:#666;font-weight:400">'
-                'Schueler</span>'
+                'Student</span>'
             ).style('font-size:18px;font-weight:500')
-            username = app.storage.user.get('username', '')
-            ui.label(f'Willkommen, {username}').style(
+            ui.label(f'Welcome, {username}').style(
                 'font-size:12px;color:#666'
             )
         with ui.row().style('gap:8px'):
-            ui.button('Statistik',
+            ui.button('Statistics',
                 on_click=lambda: ui.navigate.to('/student/statistics')
             ).style('font-size:12px')
-            ui.button('Profil',
+            ui.button('Profile',
                 on_click=lambda: ui.navigate.to('/profile')
             ).style('font-size:12px')
-            ui.button('Abmelden',
+            ui.button('Logout',
                 on_click=lambda: ui.navigate.to('/')
             ).style('font-size:12px')
 
-    with ui.column().style('padding:0 24px 24px'):
-        db = Database()
-        session = db.get_session()
-        student_id = app.storage.user.get('user_id', 1)
+    with ui.column().style('max-width:900px;margin:0 auto;padding:0 24px'):
 
-        # Services verwenden
-        quizze = quiz_service.get_published(session)
-        attempts = attempt_service.get_attempts_by_student(
-            session, student_id
-        )
-        avg = attempt_service.get_average(attempts)
-
-        # Statistik-Karten
-        with ui.row().style(
-            'gap:12px;margin-bottom:24px;width:100%'
-        ):
+        # --- Stat cards (available quizzes, completed, average) ---
+        with ui.row().style('gap:16px;margin-bottom:28px;width:100%'):
             for val, label, color in [
-                (str(len(quizze)), 'Verfuegbare Quizze', '#3B6D11'),
-                (str(len(attempts)), 'Abgeschlossen', '#3B6D11'),
-                (f'{avg:.0f}%', 'Durchschnitt', '#3B6D11')
+                (str(len(quizzes)), 'Available Quizzes', '#3B6D11'),
+                (str(len(attempts)), 'Completed', '#3B6D11'),
+                (f'{avg:.0f}%', 'Average', '#3B6D11'),
             ]:
                 with ui.card().style(
-                    'flex:1;padding:16px;border-radius:8px'
+                    'flex:1;padding:20px;border-radius:10px;'
+                    'box-shadow:0 1px 3px rgba(0,0,0,0.06)'
                 ):
                     ui.label(label).style(
                         'font-size:12px;color:#666;margin-bottom:6px'
                     )
                     ui.label(val).style(
-                        f'font-size:28px;font-weight:500;color:{color}'
+                        f'font-size:32px;font-weight:500;color:{color}'
                     )
 
-        # Suchleiste
-        ui.label('Verfuegbare Quizze').style(
-            'font-size:16px;font-weight:500;margin-bottom:12px'
-        )
-        search = ui.input(
-            placeholder='Quiz suchen...'
-        ).style(
-            'width:100%;margin-bottom:16px;'
-            'border-radius:8px;font-size:13px'
+        # --- Available quizzes section ---
+        ui.label('Available Quizzes').style(
+            'font-size:20px;font-weight:500;margin-bottom:16px'
         )
 
-        if not quizze:
-            ui.label('Keine Quizze verfuegbar').style('color:#666')
+        # Empty state
+        if not quizzes:
+            with ui.card().style(
+                'width:100%;padding:40px;text-align:center;border-radius:12px'
+            ):
+                ui.label('No quizzes available.').style('color:#666')
             return
 
-        # Quiz-Karten erstellen
-        quiz_refs = {}
-        with ui.row().style('gap:12px;flex-wrap:wrap'):
-            for quiz in quizze:
-                with ui.column() as col:
-                    with ui.card().style(
-                        'min-width:280px;flex:1;'
-                        'padding:20px;border-radius:12px'
-                    ):
-                        ui.label(quiz.title).style(
-                            'font-size:15px;font-weight:500;margin-bottom:4px'
-                        )
-                        ui.label(quiz.description).style(
-                            'font-size:12px;color:#666;margin-bottom:12px'
-                        )
-                        ui.html(
-                            '<hr style="border:none;border-top:'
-                            '0.5px solid #E5E5E5;margin:10px 0">'
-                        )
-                        ui.button(
-                            'Quiz starten',
-                            on_click=lambda q=quiz:
-                                ui.navigate.to(
-                                    f'/student/quiz/{q.id}'
-                                )
-                        ).style(
-                            'width:100%;background:#111;color:white;'
-                            'border-radius:8px;font-size:13px'
-                        )
-                quiz_refs[quiz.id] = {
-                    'col': col,
-                    'title': quiz.title
+        # --- Quiz cards ---
+        with ui.row().style('gap:16px;flex-wrap:wrap'):
+            for quiz in quizzes:
+                questions = session.exec(
+                    select(Question).where(Question.quiz_id == quiz.id)
+                ).all()
+
+                # Collect question types for badge display
+                types_used = set(q.question_type for q in questions)
+                type_map = {
+                    'single': 'Single Choice',
+                    'multiple': 'Multiple Choice',
+                    'truefalse': 'True/False'
                 }
 
-        # Search function — case-insensitive thanks to .lower()
-        def filter_quizze():
-            term = search.value.lower()
-            for qid, data in quiz_refs.items():
-                if term in data['title'].lower():
-                    data['col'].style('display:block')
-                else:
-                    data['col'].style('display:none')
+                with ui.card().style(
+                    'min-width:280px;flex:1;padding:20px;border-radius:12px;'
+                    'box-shadow:0 1px 3px rgba(0,0,0,0.06)'
+                ):
+                    ui.label(quiz.title).style(
+                        'font-size:15px;font-weight:500;color:#1A1A18;margin-bottom:4px'
+                    )
+                    ui.label(quiz.description).style(
+                        'font-size:12px;color:#666;margin-bottom:10px'
+                    )
 
-        search.on('input', filter_quizze)
+                    # Question type badges
+                    with ui.row().style(
+                        'gap:4px;flex-wrap:wrap;margin-bottom:12px'
+                    ):
+                        for t in types_used:
+                            ui.html(
+                                f'<span style="background:#F0EDE6;color:#666;'
+                                f'padding:3px 8px;border-radius:20px;font-size:10px">'
+                                f'{type_map.get(t, t)}</span>'
+                            )
+
+                    ui.label(f'{len(questions)} Questions').style(
+                        'font-size:12px;color:#999;margin-bottom:12px'
+                    )
+
+                    ui.button(
+                        '▷ Start Quiz',
+                        on_click=lambda q=quiz:
+                            ui.navigate.to(f'/student/quiz/{q.id}')
+                    ).style(
+                        'width:100%;background:#111;color:white;'
+                        'border-radius:8px;font-size:13px;padding:12px'
+                    )

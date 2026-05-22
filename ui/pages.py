@@ -6,7 +6,7 @@ class Pages:
         pass
 
     def register(self):
-        """Alle Routen registrieren"""
+        """Register all URL routes."""
 
         @ui.page('/')
         def login():
@@ -17,6 +17,11 @@ class Pages:
         def register():
             from pages.register import register_page
             register_page()
+
+        @ui.page('/profile')
+        def profile():
+            from pages.profile import profile_page
+            profile_page()
 
         # Teacher Routen
         @ui.page('/teacher/dashboard')
@@ -41,6 +46,11 @@ class Pages:
         def student_dashboard():
             from pages.student.dashboard import student_dashboard
             student_dashboard()
+
+        @ui.page('/student/statistics')
+        def student_statistics():
+            from pages.student.statistics import student_statistics
+            student_statistics()
 
         @ui.page('/student/quiz/{quiz_id}')
         def student_quiz(quiz_id: int):
