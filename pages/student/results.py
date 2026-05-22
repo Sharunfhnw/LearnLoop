@@ -1,165 +1,283 @@
 from nicegui import ui
 from sqlmodel import select
+
 from data_access.db import Database
 from domain.models import QuizAttempt, Quiz, StudentAnswer, Question, AnswerOption
 
 
-def results_page(attempt_id: int):
-    """Render the quiz results page for students."""
-    ui.query('body').style('background-color:#F8F7F4;margin:0')
+def results_page(attempt_id: int) -> None:
+    ui.query('body').style('background-color: #F5F5F3')
 
     db = Database()
     session = db.get_session()
+
     attempt = session.get(QuizAttempt, attempt_id)
+    if not attempt:
+        ui.notify('Ergebnis nicht gefunden', color='negative')
+        ui.navigate.to('/student/dashboard')
+        return
+
     quiz = session.get(Quiz, attempt.quiz_id)
-    pct = round(
-        attempt.score / attempt.max_score * 100
-    ) if attempt.max_score > 0 else 0
+    quiz_title = quiz.title if quiz else 'Quiz'
 
-    # --- Header ---
-    with ui.row().style(
-        'width:100%;background:white;padding:16px 24px;'
-        'align-items:center;gap:16px;'
-        'border-bottom:1px solid #E5E5E5;margin-bottom:32px'
-    ):
-        ui.button('← Zurück',
-            on_click=lambda: ui.navigate.to('/student/dashboard')
-        ).style(
-            'background:white;color:#1A1A18;border:1.5px solid #E5E5E5;'
-            'border-radius:8px;font-size:13px;padding:8px 16px'
-        ).props('no-caps')
-        ui.label('Ergebnis').style(
-            'font-size:20px;font-weight:600;color:#1A1A18'
-        )
+    max_score = attempt.max_score or 0
+    score = attempt.score or 0
+    pct = round((score / max_score) * 100) if max_score > 0 else 0
 
-    with ui.column().style(
-        'max-width:700px;margin:0 auto;padding:0 24px 32px;width:100%'
-    ):
+    correct_count = score
+    wrong_count = max_score - score if max_score >= score else 0
 
-        # --- Score card ---
-        score_color = '#3B6D11' if pct >= 60 else '#A32D2D'
+    if pct >= 80:
+        pct_color = '#3E7B12'
+        feedback = 'Sehr gut!'
+    elif pct >= 60:
+        pct_color = '#3E7B12'
+        feedback = 'Gut gemacht!'
+    else:
+        pct_color = '#B53939'
+        feedback = 'Weiter üben!'
 
-        with ui.card().style(
-            'width:100%;padding:32px;border-radius:12px;'
-            'text-align:center;margin-bottom:16px;'
-            'box-shadow:0 1px 3px rgba(0,0,0,0.06)'
-        ):
-            ui.label(f'{pct}%').style(
-                f'font-size:56px;font-weight:600;color:{score_color}'
-            )
-            ui.label(quiz.title).style(
-                'font-size:16px;font-weight:600;margin-top:8px'
-            )
+    student_answers = session.exec(
+        select(StudentAnswer).where(StudentAnswer.attempt_id == attempt_id)
+    ).all()
 
-            # Motivational message based on score
-            if pct >= 90:
-                msg = 'Ausgezeichnet!'
-            elif pct >= 75:
-                msg = 'Sehr gut!'
-            elif pct >= 60:
-                msg = 'Gut gemacht!'
-            else:
-                msg = 'Weiter üben!'
-            ui.label(msg).style('font-size:14px;color:#666;margin-top:4px')
+    ui.add_head_html("""
+    <style>
+        .results-shell {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 18px 36px 18px;
+        }
 
-            # Richtig / Falsch / Gesamt mini-cards
-            with ui.row().style(
-                'justify-content:center;gap:12px;margin-top:20px'
-            ):
-                for val, label, bg, c in [
-                    (str(attempt.score), 'Richtig', '#F8F8F8', '#3B6D11'),
-                    (
-                        str(attempt.max_score - attempt.score),
-                        'Falsch', '#F8F8F8', '#A32D2D'
-                    ),
-                    (str(attempt.max_score), 'Gesamt', '#F8F8F8', '#1A1A18'),
-                ]:
-                    with ui.card().style(
-                        f'flex:1;padding:14px 20px;background:{bg};'
-                        'border-radius:10px;text-align:center;'
-                        'box-shadow:0 1px 2px rgba(0,0,0,0.04)'
-                    ):
-                        ui.label(label).style(
-                            'font-size:12px;color:#666;margin-bottom:4px'
-                        )
-                        ui.label(val).style(
-                            f'font-size:22px;font-weight:600;color:{c}'
-                        )
+        .results-page-card {
+            background: #ffffff;
+            border: 1px solid #dfdfdb;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: none;
+        }
 
-            # Dashboard / Nochmal buttons
-            with ui.row().style(
-                'gap:8px;margin-top:20px;justify-content:center'
-            ):
-                ui.button('Dashboard',
-                    on_click=lambda: ui.navigate.to('/student/dashboard')
-                ).style(
-                    'flex:1;background:white;color:#1A1A18;'
-                    'border:1.5px solid #E5E5E5;border-radius:8px;'
-                    'font-size:13px;padding:12px'
-                ).props('no-caps')
-                ui.button('Nochmal',
-                    on_click=lambda: ui.navigate.to(
-                        f'/student/quiz/{attempt.quiz_id}'
+        .results-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 26px 38px;
+            border-bottom: 1px solid #e8e8e3;
+            background: #ffffff;
+        }
+
+        .results-content-bg {
+            background: #f3f3f1;
+            padding: 38px;
+        }
+
+        .back-btn {
+            border: 1px solid #d7d7d1 !important;
+            border-radius: 16px !important;
+            background: #ffffff !important;
+            color: #171717 !important;
+            font-size: 20px !important;
+            font-weight: 500 !important;
+            padding: 14px 28px !important;
+            box-shadow: none !important;
+        }
+
+        .result-main-card {
+            width: 100%;
+            max-width: 920px;
+            margin: 0 auto 28px auto;
+            padding: 42px 34px 30px 34px;
+            background: #ffffff;
+            border: 1px solid #dfdfdb;
+            border-radius: 22px;
+            box-shadow: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 28px;
+            margin-bottom: 24px;
+        }
+
+        .mini-stat-card {
+            border: 1px solid #dfdfdb;
+            border-radius: 18px;
+            background: #ffffff;
+            padding: 24px 20px;
+            text-align: center;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .secondary-btn {
+            width: 100%;
+            border: 1px solid #d7d7d1 !important;
+            border-radius: 16px !important;
+            background: #ffffff !important;
+            color: #171717 !important;
+            font-size: 20px !important;
+            font-weight: 500 !important;
+            padding: 16px 22px !important;
+            box-shadow: none !important;
+        }
+
+        .detail-card {
+            width: 100%;
+            border: 1px solid #dfdfdb;
+            border-radius: 22px;
+            background: #ffffff;
+            padding: 28px 30px;
+            box-shadow: none;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 18px;
+            padding: 18px 0;
+        }
+
+        .detail-divider {
+            border-top: 1px solid #ecece7;
+        }
+
+        .detail-icon-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        @media (max-width: 900px) {
+            .stats-grid,
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .results-content-bg {
+                padding: 18px;
+            }
+
+            .result-main-card {
+                padding: 26px 18px 22px 18px;
+            }
+        }
+    </style>
+    """)
+
+    with ui.column().classes('results-shell'):
+        with ui.card().classes('results-page-card'):
+
+            with ui.row().classes('results-header'):
+                ui.button('← Zurück', on_click=lambda: ui.navigate.to('/student/dashboard')).classes('back-btn')
+                ui.label('Ergebnis').style('font-size: 28px; font-weight: 700; color: #111;')
+
+            with ui.column().classes('results-content-bg'):
+
+                with ui.card().classes('result-main-card'):
+                    ui.label(f'{pct}%').style(
+                        f'font-size: 96px; line-height: 1; font-weight: 700; text-align: center; color: {pct_color}; width: 100%;'
                     )
-                ).style(
-                    'flex:1;background:white;color:#1A1A18;'
-                    'border:1.5px solid #E5E5E5;border-radius:8px;'
-                    'font-size:13px;padding:12px'
-                ).props('no-caps')
-
-        # --- Detailauswertung ---
-        with ui.card().style(
-            'width:100%;padding:24px;border-radius:12px;'
-            'box-shadow:0 1px 3px rgba(0,0,0,0.06)'
-        ):
-            ui.label('Detailauswertung').style(
-                'font-size:16px;font-weight:600;margin-bottom:16px'
-            )
-
-            sa_list = session.exec(
-                select(StudentAnswer).where(
-                    StudentAnswer.attempt_id == attempt_id
-                )
-            ).all()
-
-            for sa in sa_list:
-                q = session.get(Question, sa.question_id)
-                opt = session.get(AnswerOption, sa.selected_answer_option_id)
-                icon = '✓' if sa.is_correct else '✗'
-                c = '#3B6D11' if sa.is_correct else '#A32D2D'
-                bg = '#EAF3DE' if sa.is_correct else '#FCEBEB'
-
-                with ui.row().style(
-                    f'width:100%;align-items:flex-start;gap:10px;'
-                    f'padding:12px;margin-bottom:6px;'
-                    f'background:{bg};border-radius:8px'
-                ):
-                    ui.label(icon).style(
-                        f'color:{c};font-weight:600;font-size:16px;'
-                        'margin-top:2px'
+                    ui.label(quiz_title).style(
+                        'font-size: 28px; font-weight: 700; text-align: center; color: #111; margin-top: 8px; width: 100%;'
                     )
-                    with ui.column().style('gap:3px'):
-                        ui.label(
-                            q.text if q else '-'
-                        ).style(
-                            'font-size:13px;font-weight:500;color:#1A1A18'
-                        )
-                        ui.label(
-                            f'Deine Antwort: {opt.text if opt else "-"}'
-                        ).style(f'font-size:12px;color:{c}')
+                    ui.label(feedback).style(
+                        'font-size: 20px; color: #6b6b6b; text-align: center; width: 100%; margin-top: 4px;'
+                    )
 
-                        # Show correct answer if wrong
-                        if not sa.is_correct:
-                            correct_opts = session.exec(
-                                select(AnswerOption).where(
-                                    AnswerOption.question_id == sa.question_id,
-                                    AnswerOption.is_correct == True
+                    with ui.element('div').classes('stats-grid'):
+                        with ui.element('div').classes('mini-stat-card'):
+                            ui.label('Richtig').style(
+                                'font-size: 18px; color: #2c2c2c; text-align: center; width: 100%;'
+                            )
+                            ui.label(str(correct_count)).style(
+                                'font-size: 40px; font-weight: 700; color: #3E7B12; text-align: center; width: 100%; margin-top: 8px;'
+                            )
+
+                        with ui.element('div').classes('mini-stat-card'):
+                            ui.label('Falsch').style(
+                                'font-size: 18px; color: #2c2c2c; text-align: center; width: 100%;'
+                            )
+                            ui.label(str(wrong_count)).style(
+                                'font-size: 40px; font-weight: 700; color: #B53939; text-align: center; width: 100%; margin-top: 8px;'
+                            )
+
+                        with ui.element('div').classes('mini-stat-card'):
+                            ui.label('Gesamt').style(
+                                'font-size: 18px; color: #2c2c2c; text-align: center; width: 100%;'
+                            )
+                            ui.label(str(max_score)).style(
+                                'font-size: 40px; font-weight: 700; color: #111; text-align: center; width: 100%; margin-top: 8px;'
+                            )
+
+                    with ui.element('div').classes('action-grid'):
+                        ui.button('⌂ Dashboard', on_click=lambda: ui.navigate.to('/student/dashboard')).classes('secondary-btn')
+                        ui.button('↺ Nochmal', on_click=lambda: ui.navigate.to(f'/student/quiz/{attempt.quiz_id}')).classes('secondary-btn')
+
+                with ui.card().classes('detail-card'):
+                    ui.label('Detailauswertung').style(
+                        'font-size: 22px; font-weight: 700; color: #111; margin-bottom: 8px;'
+                    )
+
+                    for index, sa in enumerate(student_answers):
+                        question = session.get(Question, sa.question_id)
+                        selected_option = session.get(AnswerOption, sa.selected_answer_option_id)
+
+                        correct_option = session.exec(
+                            select(AnswerOption).where(
+                                AnswerOption.question_id == sa.question_id,
+                                AnswerOption.is_correct == True,
+                            )
+                        ).first()
+
+                        is_correct = bool(sa.is_correct)
+                        icon_symbol = '✓' if is_correct else '✕'
+                        icon_color = '#3E7B12' if is_correct else '#B53939'
+                        icon_bg = '#EDF6E5' if is_correct else '#FBEAEA'
+                        answer_color = '#3E7B12' if is_correct else '#B53939'
+
+                        if index > 0:
+                            ui.separator().classes('detail-divider')
+
+                        with ui.element('div').classes('detail-row'):
+                            with ui.element('div').classes('detail-icon-circle').style(
+                                f'color: {icon_color}; background: {icon_bg}; border: 2px solid {icon_color};'
+                            ):
+                                ui.label(icon_symbol).style(
+                                    f'font-size: 18px; font-weight: 700; color: {icon_color}; margin: 0;'
                                 )
-                            ).all()
-                            if correct_opts:
-                                correct_text = ', '.join(
-                                    o.text for o in correct_opts
+
+                            with ui.column().style('gap: 2px; width: 100%;'):
+                                ui.label(question.text if question else 'Frage').style(
+                                    'font-size: 18px; font-weight: 700; color: #111;'
                                 )
                                 ui.label(
-                                    f'Richtig: {correct_text}'
-                                ).style('font-size:12px;color:#666')
+                                    f'Deine Antwort: {selected_option.text if selected_option else "-"}'
+                                ).style(
+                                    f'font-size: 16px; color: {answer_color};'
+                                )
+
+                                if not is_correct and correct_option:
+                                    ui.label(f'Richtig: {correct_option.text}').style(
+                                        'font-size: 16px; color: #5f5f5f;'
+                                    )
+
+    session.close()
