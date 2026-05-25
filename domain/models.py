@@ -2,99 +2,150 @@
 Defines all database tables using SQLModel.
 Each class represents one table in the SQLite database.
 """
-from sqlmodel import SQLModel, Field
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from sqlmodel import Field, Relationship, SQLModel
+
+
 class User(SQLModel, table=True):
-    """Represents a user in the system.
-    Attributes:
-        id: Auto-generated primary key.
-        username: Unique login name.
-        email: Email address of the user.
-        password_hash: SHA256 hashed password (never stored plain).
-        role: Either 'teacher' or 'student'.
-    """
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str
     email: str
     password_hash: str
     role: str  # 'teacher' or 'student'
+
+    quizzes: list["Quiz"] = Relationship(back_populates="teacher")
+    attempts: list["QuizAttempt"] = Relationship(back_populates="student")
+
+    def check_password(self, password_hash: str) -> bool:
+        """Compare a given password hash with the stored password hash."""
+        return self.password_hash == password_hash
+
+    def is_teacher(self) -> bool:
+        """Return True if this user has the teacher role."""
+        return self.role == "teacher"
+
+    def is_student(self) -> bool:
+        """Return True if this user has the student role."""
+        return self.role == "student"
+
+
 class Quiz(SQLModel, table=True):
-    """Represents a quiz created by a teacher.
-    Attributes:
-        id: Auto-generated primary key.
-        title: Display name of the quiz.
-        description: Short description shown to students.
-        is_published: If True, students can see and attempt the quiz.
-        teacher_id: Foreign key to the User who created the quiz.
-    """
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
     description: str
-    is_published: bool = False  # Draft by default
-    teacher_id: int = Field(foreign_key='user.id')
+    is_published: bool = False
+    teacher_id: int = Field(foreign_key="user.id")
+
+    teacher: Optional[User] = Relationship(back_populates="quizzes")
+    questions: list["Question"] = Relationship(back_populates="quiz")
+    attempts: list["QuizAttempt"] = Relationship(back_populates="quiz")
+
+    def publish(self) -> None:
+        """Make the quiz visible for students."""
+        self.is_published = True
+
+    def add_question(self, question: "Question") -> None:
+        """Add a question object to this quiz in memory."""
+        self.questions.append(question)
+
+    def get_questions(self) -> list["Question"]:
+        """Return all questions that belong to this quiz."""
+        return self.questions
+
+
 class Question(SQLModel, table=True):
-    """Represents a single question inside a quiz.
-    Attributes:
-        id: Auto-generated primary key.
-        text: The question text shown to the student.
-        quiz_id: Foreign key to the Quiz this question belongs to.
-        question_type: Determines how the question is displayed.
-            'single'    = Single Choice (radio button, one correct answer)
-            'multiple'  = Multiple Choice (checkboxes, partial scoring)
-            'truefalse' = True/False (two buttons, Wahr/Falsch)
-    """
     id: Optional[int] = Field(default=None, primary_key=True)
     text: str
-    quiz_id: int = Field(foreign_key='quiz.id')
-    question_type: str = Field(default='single')
+    quiz_id: int = Field(foreign_key="quiz.id")
+    question_type: str = Field(default="single")
+    # 'single' | 'multiple' | 'truefalse'
+
+    quiz: Optional[Quiz] = Relationship(back_populates="questions")
+    answer_options: list["AnswerOption"] = Relationship(back_populates="question")
+    student_answers: list["StudentAnswer"] = Relationship(back_populates="question")
+
+    def check_answer(self, selected_option_ids: list[int]) -> bool:
+        """Check if the selected options exactly match the correct options."""
+        correct_ids = {option.id for option in self.answer_options if option.is_correct}
+        selected_ids = set(selected_option_ids)
+        return selected_ids == correct_ids
+
+
 class AnswerOption(SQLModel, table=True):
-    """Represents one answer option for a question.
-    Attributes:
-        id: Auto-generated primary key.
-        text: The answer text shown to the student.
-        is_correct: True if this is a correct answer.
-        question_id: Foreign key to the Question this belongs to.
-    """
     id: Optional[int] = Field(default=None, primary_key=True)
     text: str
     is_correct: bool
-    question_id: int = Field(foreign_key='question.id')
+    question_id: int = Field(foreign_key="question.id")
+
+    question: Optional[Question] = Relationship(back_populates="answer_options")
+    selections: list["StudentAnswerSelection"] = Relationship(back_populates="answer_option")
+
+    def is_valid_option(self) -> bool:
+        """Return True if this answer option contains visible text."""
+        return bool(self.text and self.text.strip())
+
+
 class QuizAttempt(SQLModel, table=True):
-    """Represents one attempt by a student to complete a quiz.
-    Attributes:
-        id: Auto-generated primary key.
-        student_id: Foreign key to the User (student) who attempted.
-        quiz_id: Foreign key to the Quiz that was attempted.
-        score: Achieved score (float to support partial scoring).
-        max_score: Maximum possible score for the quiz.
-        completed_at: Timestamp when the attempt was submitted.
-    """
     id: Optional[int] = Field(default=None, primary_key=True)
-    student_id: int = Field(foreign_key='user.id')
-    quiz_id: int = Field(foreign_key='quiz.id')
-    score: float = Field(default=0.0)      # Float for partial scoring
-    max_score: float = Field(default=0.0)  # Float for partial scoring
+    student_id: int = Field(foreign_key="user.id")
+    quiz_id: int = Field(foreign_key="quiz.id")
+    score: int = Field(default=0)
+    max_score: int = Field(default=0)
     completed_at: datetime = Field(default_factory=datetime.now)
+
+    student: Optional[User] = Relationship(back_populates="attempts")
+    quiz: Optional[Quiz] = Relationship(back_populates="attempts")
+    student_answers: list["StudentAnswer"] = Relationship(back_populates="attempt")
+
+    def calculate_score(self) -> int:
+        """Calculate the score from all correct student answers."""
+        self.score = sum(1 for answer in self.student_answers if answer.is_correct)
+        self.max_score = len(self.student_answers)
+        return self.score
+
+    def finish_attempt(self) -> None:
+        """Mark the attempt as finished by setting the completion time."""
+        self.completed_at = datetime.now()
+
+    def get_percentage(self) -> int:
+        """Return the achieved score as a whole percentage."""
+        if self.max_score == 0:
+            return 0
+        return round(self.score / self.max_score * 100)
+
+
 class StudentAnswer(SQLModel, table=True):
-    """Represents the answer a student gave for one question.
-    Attributes:
-        id: Auto-generated primary key.
-        attempt_id: Foreign key to the QuizAttempt.
-        question_id: Foreign key to the Question that was answered.
-        selected_answer_option_id: The chosen AnswerOption (optional
-            for True/False where no option ID is stored on wrong answer).
-        is_correct: True if the answer was correct.
-        partial_score: Points earned (0.0-1.0, supports partial credit
-            for Multiple Choice questions).
-    """
     id: Optional[int] = Field(default=None, primary_key=True)
-    attempt_id: int = Field(foreign_key='quizattempt.id')
-    question_id: int = Field(foreign_key='question.id')
-    # Optional: not set for wrong True/False answers
-    selected_answer_option_id: Optional[int] = Field(
-        default=None, foreign_key='answeroption.id'
-    )
-    is_correct: bool
-    # Partial credit for Multiple Choice (0.0 to 1.0)
-    partial_score: float = Field(default=0.0)
+    attempt_id: int = Field(foreign_key="quizattempt.id")
+    question_id: int = Field(foreign_key="question.id")
+    is_correct: bool = False
+
+    attempt: Optional[QuizAttempt] = Relationship(back_populates="student_answers")
+    question: Optional[Question] = Relationship(back_populates="student_answers")
+    selections: list["StudentAnswerSelection"] = Relationship(back_populates="student_answer")
+
+    def check_correctness(self) -> bool:
+        """Check correctness by comparing selected options with correct options."""
+        if not self.question:
+            return self.is_correct
+        selected_ids = [selection.answer_option_id for selection in self.selections]
+        self.is_correct = self.question.check_answer(selected_ids)
+        return self.is_correct
+
+    def save_answer(self, selected_option_ids: list[int]) -> None:
+        """Store selected option ids as StudentAnswerSelection objects in memory."""
+        self.selections = [
+            StudentAnswerSelection(answer_option_id=option_id)
+            for option_id in selected_option_ids
+        ]
+
+
+class StudentAnswerSelection(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    student_answer_id: int = Field(foreign_key="studentanswer.id")
+    answer_option_id: int = Field(foreign_key="answeroption.id")
+
+    student_answer: Optional[StudentAnswer] = Relationship(back_populates="selections")
+    answer_option: Optional[AnswerOption] = Relationship(back_populates="selections")
