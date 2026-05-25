@@ -4,5 +4,6 @@ from domain.models import (
     Question,
     AnswerOption,
     QuizAttempt,
-    StudentAnswer
+    StudentAnswer,
+    StudentAnswerSelection
 )
