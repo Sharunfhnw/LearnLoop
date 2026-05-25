@@ -22,7 +22,7 @@ class QuizService:
         ).all()
     def publish(self, session, quiz: Quiz) -> Quiz:
         """Publish a quiz."""
-        quiz.is_published = True
+        quiz.publish()
         session.add(quiz)
         session.commit()
         return quiz
