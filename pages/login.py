@@ -46,7 +46,7 @@ def login_page():
                     return
                 db = Database()
                 session = db.get_session()
-                # AuthService fuer Login verwenden
+                # Use AuthService for login
                 user = auth.login(
                     session=session,
                     username=username.value,
@@ -82,7 +82,7 @@ def login_page():
                 '<hr style="border:none;'
                 'border-top:0.5px solid #E5E5E5;margin:16px 0">'
             )
-            ui.label('Demo-Zugaenge').style(
+            ui.label('Demo-Zugänge').style(
                 'font-size:12px;font-weight:500;'
                 'color:#666;margin-bottom:8px'
             )

@@ -26,7 +26,7 @@ def profile_page():
         'padding:0 24px 24px;max-width:480px;'
         'margin:0 auto;width:100%'
     ):
-        # Profil-Karte
+        # Profile card
         with ui.card().style(
             'width:100%;padding:20px;border-radius:12px;margin-bottom:16px'
         ):
@@ -57,7 +57,7 @@ def profile_page():
                         f'font-weight:500">{role_label}</span>'
                     )
 
-        # Passwort aendern
+        # Change password
         with ui.card().style(
             'width:100%;padding:20px;border-radius:12px'
         ):
@@ -95,7 +95,7 @@ def profile_page():
                 user_id = app.storage.user.get('user_id', 1)
                 from domain.models import User
                 user = session.get(User, user_id)
-                # AuthService fuer Passwortaenderung verwenden
+                # Use AuthService to change your password
                 success = auth.change_password(
                     session=session,
                     user=user,
