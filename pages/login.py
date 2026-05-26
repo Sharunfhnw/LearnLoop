@@ -40,7 +40,7 @@ def login_page():
             def do_login():
                 if not username.value or not password.value:
                     ui.notify(
-                        'Alle Felder ausfullen!',
+                        'Alle Felder ausfüllen!',
                         color='negative'
                     )
                     return
