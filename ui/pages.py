@@ -23,7 +23,7 @@ class Pages:
             from pages.profile import profile_page
             profile_page()
 
-        # Teacher Routen
+        # Teacher routes
         @ui.page('/teacher/dashboard')
         def teacher_dashboard():
             from pages.teacher.dashboard import teacher_dashboard
@@ -36,12 +36,18 @@ class Pages:
             teacher_id = app.storage.user.get('user_id', 1)
             quiz_create(teacher_id=teacher_id)
 
+        @ui.page('/teacher/edit/{quiz_id}')
+        def teacher_edit(quiz_id: int):
+            from pages.teacher.quiz_edit import quiz_edit
+            teacher_id = app.storage.user.get('user_id', 1)
+            quiz_edit(quiz_id=quiz_id, teacher_id=teacher_id)
+
         @ui.page('/teacher/results/{quiz_id}')
         def teacher_results(quiz_id: int):
             from pages.teacher.quiz_results import quiz_results
             quiz_results(quiz_id=quiz_id)
 
-        # Student Routen
+        # Student routes
         @ui.page('/student/dashboard')
         def student_dashboard():
             from pages.student.dashboard import student_dashboard
