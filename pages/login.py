@@ -86,11 +86,20 @@ def login_page():
                 'font-size:12px;font-weight:500;'
                 'color:#666;margin-bottom:8px'
             )
+
+            def fill_lehrer():
+                username.value = 'lehrer'
+                password.value = 'lehrer123'
+
+            def fill_schueler():
+                username.value = 'schueler'
+                password.value = 'schueler123'
+
             with ui.row().style('gap:8px;width:100%'):
                 with ui.element('div').style(
-                    'flex:1;background:#E6F1FB;'
-                    'border-radius:8px;padding:10px'
-                ):
+                        'flex:1;background:#E6F1FB;'
+                        'border-radius:8px;padding:10px;cursor:pointer'
+                ).on('click', lambda _: fill_lehrer()):
                     ui.label('Lehrer').style(
                         'font-size:12px;font-weight:500;color:#0C447C'
                     )
@@ -98,9 +107,9 @@ def login_page():
                         'font-size:11px;color:#185FA5'
                     )
                 with ui.element('div').style(
-                    'flex:1;background:#EAF3DE;'
-                    'border-radius:8px;padding:10px'
-                ):
+                        'flex:1;background:#EAF3DE;'
+                        'border-radius:8px;padding:10px;cursor:pointer'
+                ).on('click', lambda _: fill_schueler()):
                     ui.label('Schueler').style(
                         'font-size:12px;font-weight:500;color:#27500A'
                     )
