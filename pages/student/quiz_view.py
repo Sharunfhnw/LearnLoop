@@ -1,211 +1,207 @@
 from nicegui import ui, app
 from sqlmodel import select
 from data_access.db import Database
-from domain.models import (
-    Quiz, Question, AnswerOption, QuizAttempt, StudentAnswer
-)
+from domain.models import Quiz, Question, AnswerOption, QuizAttempt, StudentAnswer, StudentAnswerSelection
 
 
 def quiz_view(quiz_id: int, student_id: int):
-    """Render the quiz taking page (one question at a time)."""
-    ui.query('body').style('background-color:#F8F7F4;margin:0')
+    """Quiz taking page — handles Single, Multiple, and True/False correctly."""
+    ui.query('body').style('background-color:#F5F5F7;margin:0')
 
     db = Database()
     session = db.get_session()
     quiz = session.get(Quiz, quiz_id)
-    questions = session.exec(
-        select(Question).where(Question.quiz_id == quiz_id)
-    ).all()
+    questions = session.exec(select(Question).where(Question.quiz_id == quiz_id)).all()
 
     if not quiz or not questions:
-        ui.label('Quiz not found.').style('padding:24px')
+        ui.label('Quiz nicht gefunden.').style('padding:24px')
         return
 
-    # Track the current question index and collected answers
     current_idx = {'v': 0}
-    answers = {}  # question_id -> selected answer option id
+    # For single/truefalse: question_id -> option_id
+    # For multiple: question_id -> set of option_ids
+    answers = {}
 
-    # --- Header bar ---
+    # ── Header ───────────────────────────────────────────────────────────────
     with ui.row().style(
-        'width:100%;background:white;padding:12px 24px;'
+        'width:100%;background:white;padding:12px 40px;'
         'align-items:center;justify-content:space-between;'
         'box-shadow:0 1px 3px rgba(0,0,0,0.08)'
     ):
-        ui.button('← Back',
-            on_click=lambda: ui.navigate.to('/student/dashboard')
-        ).style('background:transparent;color:#666;font-size:12px')
+        with ui.button(on_click=lambda: ui.navigate.to('/student/dashboard')).style(
+            'background:white;color:#1A1A18;border:1.5px solid #E5E5E5;border-radius:8px;font-size:13px'
+        ).props('no-caps flat'):
+            ui.html('&#8592; Zurück')
 
-        ui.label(quiz.title).style(
-            'font-size:16px;font-weight:500;color:#1A1A18'
-        )
+        with ui.column().style('gap:0;align-items:center'):
+            ui.label(quiz.title).style('font-size:16px;font-weight:700;color:#1A1A18')
+            question_counter = ui.label('Frage 1 von ' + str(len(questions))).style('font-size:12px;color:#888')
 
-        # Progress percentage badge (updates per question)
         pct_label = ui.label('0%').style(
-            'font-size:13px;color:#666;background:#F0F0F0;'
-            'padding:4px 10px;border-radius:20px'
+            'font-size:13px;color:#666;background:#F0F0F0;padding:4px 12px;border-radius:20px'
         )
 
-    # Thin progress bar below header
-    progress_bar = ui.linear_progress(
-        value=0, show_value=False
-    ).style('height:4px;margin:0;border-radius:0')
+    progress_bar = ui.linear_progress(value=0, show_value=False).style('height:4px;margin:0;border-radius:0')
     progress_bar.props('color=black instant-feedback')
 
-    # Main content container (cleared and re-rendered per question)
-    content = ui.column().style(
-        'max-width:600px;margin:32px auto;padding:0 20px;width:100%'
-    )
+    content = ui.column().style('max-width:700px;margin:32px auto;padding:0 40px;width:100%;box-sizing:border-box')
 
     def show_question(idx: int):
-        """Render the question at the given index."""
         current_idx['v'] = idx
         content.clear()
 
         q = questions[idx]
-
-        # Update progress indicators
         pct = round(idx / len(questions) * 100)
         pct_label.set_text(f'{pct}%')
         progress_bar.set_value(idx / len(questions))
+        question_counter.set_text(f'Frage {idx + 1} von {len(questions)}')
 
-        # Load answer options for this question
-        options = session.exec(
-            select(AnswerOption).where(AnswerOption.question_id == q.id)
-        ).all()
+        options = session.exec(select(AnswerOption).where(AnswerOption.question_id == q.id)).all()
+
+        type_map = {'single': 'Single Choice', 'multiple': 'Multiple Choice', 'truefalse': 'True/False'}
+        type_label = type_map.get(q.question_type, 'Single Choice')
 
         with content:
-            # Question type badge
-            type_map = {
-                'single': 'Single Choice',
-                'multiple': 'Multiple Choice',
-                'truefalse': 'True/False'
-            }
-            type_label = type_map.get(q.question_type, 'Single Choice')
             ui.html(
                 f'<span style="background:#F0EDE6;color:#666;'
-                f'padding:4px 10px;border-radius:20px;font-size:11px">'
+                f'padding:4px 12px;border-radius:20px;font-size:11px;border:1px solid #E8E4DC">'
                 f'{type_label}</span>'
             )
 
             with ui.card().style(
-                'width:100%;padding:24px;border-radius:12px;'
-                'box-shadow:0 1px 3px rgba(0,0,0,0.08);margin-top:12px'
+                'width:100%;padding:28px;border-radius:14px;'
+                'background:white;box-shadow:0 1px 4px rgba(0,0,0,0.08);margin-top:16px'
             ):
-                ui.label(q.text).style(
-                    'font-size:18px;font-weight:500;margin-bottom:6px'
-                )
-                ui.label('Choose the correct answer').style(
-                    'font-size:12px;color:#999;margin-bottom:20px'
-                )
+                ui.label(q.text).style('font-size:20px;font-weight:700;margin-bottom:6px;color:#1A1A18')
 
-                # Render each answer option as a clickable row
-                for opt in options:
-                    is_selected = answers.get(q.id) == opt.id
+                if q.question_type == 'multiple':
+                    ui.label('Wähle alle richtigen Antworten').style('font-size:12px;color:#999;margin-bottom:20px')
+                else:
+                    ui.label('Wähle die richtige Antwort').style('font-size:12px;color:#999;margin-bottom:20px')
 
-                    bg = 'background:#111;color:white' if is_selected \
-                        else 'background:white;color:#1A1A18'
-                    border = 'border:2px solid #111' if is_selected \
-                        else 'border:1.5px solid #E5E5E5'
-                    radio = '●' if is_selected else '○'
-                    icon_color = 'white' if is_selected else '#999'
-                    weight = '500' if is_selected else '400'
+                if q.question_type == 'multiple':
+                    # Multiple: checkbox-style, answers stored as set
+                    selected_set = answers.get(q.id, set())
 
-                    with ui.row().style(
-                        f'width:100%;align-items:center;gap:12px;'
-                        f'padding:14px 16px;border-radius:10px;cursor:pointer;'
-                        f'margin-bottom:8px;{bg};{border}'
-                    ) as row:
-                        ui.label(radio).style(
-                            f'font-size:16px;color:{icon_color}'
-                        )
-                        ui.label(opt.text).style(
-                            f'font-size:14px;font-weight:{weight}'
-                        )
+                    for opt in options:
+                        is_selected = opt.id in selected_set
+                        bg = 'background:#1A1A18;color:white' if is_selected else 'background:white;color:#1A1A18'
+                        border = 'border:2px solid #1A1A18' if is_selected else 'border:1.5px solid #E5E5E5'
+                        check = '☑' if is_selected else '☐'
 
-                        def on_click(o=opt):
-                            """Save the selected answer and re-render."""
-                            answers[q.id] = o.id
-                            show_question(idx)
+                        with ui.row().style(
+                            f'width:100%;align-items:center;gap:12px;'
+                            f'padding:14px 18px;border-radius:10px;cursor:pointer;'
+                            f'margin-bottom:8px;{bg};{border};box-sizing:border-box'
+                        ) as row:
+                            ui.label(check).style('font-size:18px')
+                            ui.label(opt.text).style('font-size:15px;font-weight:500')
 
-                        row.on('click', on_click)
+                            def on_click_multi(o=opt):
+                                cur = answers.get(q.id, set())
+                                if o.id in cur:
+                                    cur.discard(o.id)
+                                else:
+                                    cur.add(o.id)
+                                answers[q.id] = cur
+                                show_question(idx)
 
-                # --- Navigation buttons ---
-                with ui.row().style(
-                    'width:100%;justify-content:space-between;'
-                    'margin-top:24px;gap:8px'
-                ):
-                    # Back button (hidden on first question)
+                            row.on('click', on_click_multi)
+
+                else:
+                    # Single or True/False: radio-style
+                    for opt in options:
+                        is_selected = answers.get(q.id) == opt.id
+                        bg = 'background:#1A1A18;color:white' if is_selected else 'background:white;color:#1A1A18'
+                        border = 'border:2px solid #1A1A18' if is_selected else 'border:1.5px solid #E5E5E5'
+                        radio = '●' if is_selected else '○'
+                        icon_color = 'white' if is_selected else '#999'
+
+                        with ui.row().style(
+                            f'width:100%;align-items:center;gap:12px;'
+                            f'padding:14px 18px;border-radius:10px;cursor:pointer;'
+                            f'margin-bottom:8px;{bg};{border};box-sizing:border-box'
+                        ) as row:
+                            ui.label(radio).style(f'font-size:18px;color:{icon_color}')
+                            ui.label(opt.text).style('font-size:15px;font-weight:500')
+
+                            def on_click_single(o=opt):
+                                answers[q.id] = o.id
+                                show_question(idx)
+
+                            row.on('click', on_click_single)
+
+                # Navigation
+                with ui.row().style('width:100%;justify-content:space-between;margin-top:24px;gap:8px'):
                     if idx > 0:
-                        ui.button('← Back',
-                            on_click=lambda: show_question(idx - 1)
-                        ).style(
-                            'flex:1;background:white;color:#1A1A18;'
-                            'border:1.5px solid #E5E5E5;border-radius:8px;'
-                            'font-size:13px;padding:12px'
-                        )
+                        with ui.button(on_click=lambda: show_question(idx - 1)).style(
+                            'flex:1;background:white;color:#1A1A18;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;padding:12px'
+                        ).props('no-caps flat'):
+                            ui.html('&#8592; Zurück')
                     else:
                         ui.element('div').style('flex:1')
 
-                    # Next button or Submit on last question
                     if idx < len(questions) - 1:
-                        ui.button('Next →',
-                            on_click=lambda: show_question(idx + 1)
-                        ).style(
-                            'flex:3;background:#111;color:white;'
-                            'border-radius:8px;font-size:13px;padding:12px'
-                        )
+                        with ui.button(on_click=lambda: show_question(idx + 1)).style(
+                            'flex:3;background:#1A1A18;color:white;border-radius:8px;font-size:14px;padding:12px'
+                        ).props('no-caps flat'):
+                            ui.html('Weiter &#8594;')
                     else:
                         def submit_quiz():
-                            """Validate all answered, save attempt and navigate to results."""
-                            unanswered = [
-                                q for q in questions if q.id not in answers
-                            ]
+                            unanswered = [q for q in questions if q.id not in answers]
                             if unanswered:
-                                ui.notify(
-                                    'Please answer all questions!',
-                                    color='negative'
-                                )
+                                ui.notify('Bitte alle Fragen beantworten!', color='negative')
                                 return
 
-                            # Create the attempt record
+                            # Score: 1 point per question, whole numbers only
                             attempt = QuizAttempt(
-                                student_id=student_id,
-                                quiz_id=quiz_id,
-                                score=0,
-                                max_score=len(questions)
+                                student_id=student_id, quiz_id=quiz_id,
+                                score=0, max_score=len(questions)
                             )
                             session.add(attempt)
                             session.commit()
 
-                            # Save each student answer and calculate score
                             score = 0
                             for question in questions:
-                                sel_id = answers.get(question.id)
-                                opt = session.get(AnswerOption, sel_id)
-                                correct = opt.is_correct if opt else False
-                                if correct:
-                                    score += 1
-                                session.add(StudentAnswer(
+                                if question.question_type == 'multiple':
+                                    # Multiple: correct only if EXACTLY the correct set is selected
+                                    selected_ids = set(answers.get(question.id, set()))
+                                    all_opts = session.exec(
+                                        select(AnswerOption).where(AnswerOption.question_id == question.id)
+                                    ).all()
+                                    correct_ids = {o.id for o in all_opts if o.is_correct}
+                                    is_correct = selected_ids == correct_ids
+                                else:
+                                    selected_id = answers.get(question.id)
+                                    selected_ids = {selected_id} if selected_id is not None else set()
+                                    opt = session.get(AnswerOption, selected_id)
+                                    is_correct = opt.is_correct if opt else False
+
+                                student_answer = StudentAnswer(
                                     attempt_id=attempt.id,
                                     question_id=question.id,
-                                    selected_answer_option_id=sel_id,
-                                    is_correct=correct
-                                ))
+                                    is_correct=is_correct,
+                                )
+                                session.add(student_answer)
+                                session.commit()
+
+                                for opt_id in selected_ids:
+                                    session.add(StudentAnswerSelection(
+                                        student_answer_id=student_answer.id,
+                                        answer_option_id=opt_id,
+                                    ))
+
+                                if is_correct:
+                                    score += 1
 
                             attempt.score = score
                             session.add(attempt)
                             session.commit()
+                            ui.navigate.to(f'/student/results/{attempt.id}')
 
-                            ui.navigate.to(
-                                f'/student/results/{attempt.id}'
-                            )
+                        with ui.button(on_click=submit_quiz).style(
+                            'flex:3;background:#3B6D11;color:white;border-radius:8px;font-size:14px;padding:12px'
+                        ).props('no-caps flat'):
+                            ui.html('&#10003; Quiz abgeben')
 
-                        ui.button('Submit Quiz',
-                            on_click=submit_quiz
-                        ).style(
-                            'flex:3;background:#111;color:white;'
-                            'border-radius:8px;font-size:13px;padding:12px'
-                        )
-
-    # Show the first question on page load
     show_question(0)
