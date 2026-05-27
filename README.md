@@ -538,7 +538,7 @@ No existing data is affected when running the test suite.
 |------|--------|--------------|
 | Dario | `feature/database` | Domain models, database connection, seed data, services (`AuthService`, `QuizService`, `AttemptService`), service tests (TC_013–TC_018) |
 | Arthur | `feature/teacher` | Teacher dashboard (search, publish, unpublish ,delete), quiz creator (Single/Multiple Choice, True/False ), quiz results (detailed quiz results per student), quiz edit page |
-| Sharun | `feature/student` | Login, register (role selection), profile, student dashboard (search), quiz view (Single/Multiple/True-False), results, statistics, routing (`ui/pages.py`), unit tests (TC_001–TC_006, TC_019–TC_023), final merge to main, clickable demo cards, |
+| Sharun | `feature/student` | Login (incl. clickable demo cards), register (role selection), profile, student dashboard (search), quiz view (Single/Multiple/True-False), results, statistics, routing (`ui/pages.py`), unit tests (TC_001–TC_006, TC_019–TC_023), final merge to main, |
 
 ---
 
