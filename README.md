@@ -143,6 +143,29 @@ graph TD
 
 The wireframes and mockups for LearnLoop focus on a clean, browser-friendly learning flow and the main pages used by teachers and students.
 
+### Login / Registration Page
+The screenshot below represents the login / registration page and introduces the application entry flow.
+<img width="2988" height="1740" alt="image" src="https://github.com/user-attachments/assets/c04d5338-f335-4238-8ef3-483227a75108" />
+
+### Teacher Dashboard
+This page shows quiz management actions, published and draft quizzes, and the main controls teachers need at a glance.
+
+### Quiz Creation and Editing
+These forms allow teachers to build new quizzes or update existing ones with questions, answer options, and status changes.
+
+### Student Dashboard
+This page presents available quizzes for students and gives them a simple starting point for browsing and attempting quizzes.
+
+### Quiz Solving View
+This screen guides students through one question at a time so the answering flow stays clear and focused.
+
+### Results and Statistics
+These pages summarize quiz attempts, scores, and progress so students can review their performance after submitting a quiz.
+
+### Profile Page
+This page lets users update their personal account settings, including password changes.
+
+
 ### Main Screens
 - Login / Registration page
 - Teacher dashboard with quiz management actions
