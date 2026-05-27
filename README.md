@@ -17,7 +17,7 @@ It aims to:
 - [Application Requirements](#-application-requirements)
 - [User Stories](#-user-stories)
 - [Use Cases](#-use-cases)
-- [Wireframes / Mockups](#-wireframes--mockups)
+- [App Screenshots](#-app-screenshots)
 - [Architecture](#-architecture)
 - [Database and ORM](#-database-and-orm)
 - [Project Requirements](#-project-requirements)
@@ -139,9 +139,9 @@ graph TD
 ```
 ---
 
-## 🧱 Wireframes / Mockups
+## 🧱 App Screenshots
 
-The wireframes and mockups for LearnLoop focus on a clean, browser-friendly learning flow and the main pages used by teachers and students.
+The UI from LearnLoop focuses on a clean, browser-friendly learning flow and the main pages used by teachers and students.
 
 ### Login / Registration Page
 The screenshot below represents the login / registration page and introduces the application entry flow.
@@ -182,7 +182,7 @@ This page lets users update their personal account settings, including password 
 - Profile page for password changes
 
 ### Design Goal
-The mockups emphasize simple navigation, clear status information, and a layout that works well in a browser-based classroom setting.
+The design emphasizes simple navigation, clear status information, and a colorful layout that works well in a browser-based classroom setting.
 
 
 ---
