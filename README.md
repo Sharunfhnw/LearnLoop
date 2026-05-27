@@ -17,6 +17,7 @@ It aims to:
 - [Application Requirements](#-application-requirements)
 - [User Stories](#-user-stories)
 - [Use Cases](#-use-cases)
+- [App Screenshots](#-app-screenshots)
 - [Architecture](#-architecture)
 - [Database and ORM](#-database-and-orm)
 - [Project Requirements](#-project-requirements)
@@ -136,6 +137,53 @@ graph TD
     S --> ViewStats[View Results and Statistics]
 
 ```
+---
+
+## 🧱 App Screenshots
+
+The UI from LearnLoop focuses on a clean, browser-friendly learning flow and the main pages used by teachers and students.
+
+### Login / Registration Page
+The screenshot below represents the login / registration page and introduces the application entry flow.
+<img width="2988" height="1740" alt="image" src="https://github.com/user-attachments/assets/c04d5338-f335-4238-8ef3-483227a75108" />
+
+### Teacher Dashboard
+This page shows quiz management actions, published and draft quizzes, and the main controls teachers need at a glance.
+<img width="2984" height="1742" alt="image" src="https://github.com/user-attachments/assets/76b8e11e-2439-419a-9086-61309e18dcb0" />
+
+### Quiz Creation and Editing
+These forms allow teachers to build new quizzes or update existing ones with questions, answer options, and status changes.
+<img width="2958" height="1742" alt="image" src="https://github.com/user-attachments/assets/6b8a2f31-287e-43dc-ba5f-c39816d7503e" />
+
+### Student Dashboard
+This page presents available quizzes for students and gives them a simple starting point for browsing and attempting quizzes.
+<img width="2986" height="1744" alt="image" src="https://github.com/user-attachments/assets/6cb03996-5f1e-469b-a815-093f2e6f1868" />
+
+### Quiz Solving View
+This screen guides students through one question at a time so the answering flow stays clear and focused.
+<img width="2992" height="1746" alt="image" src="https://github.com/user-attachments/assets/ec6359ee-8dfd-454a-98e6-3e466caec366" />
+
+### Results and Statistics
+These pages summarize quiz attempts, scores, and progress so students can review their performance after submitting a quiz.
+<img width="2990" height="1706" alt="image" src="https://github.com/user-attachments/assets/c6358191-46a7-4e70-819a-eef35c76b857" />
+
+### Profile Page
+This page gives users the opportunity to change their password.
+<img width="2992" height="1748" alt="image" src="https://github.com/user-attachments/assets/b25bb7f3-d405-4fd5-a1ef-396c0d413e4c" />
+
+
+### Main Screens
+- Login / Registration page
+- Teacher dashboard with quiz management actions
+- Quiz creation and editing forms
+- Student dashboard with available quizzes
+- Quiz solving view with one question per step
+- Results and statistics pages
+- Profile page for password changes
+
+### Design Goal
+The design emphasizes simple navigation, clear status information, and a colorful layout that works well in a browser-based classroom setting.
+
 
 ---
 
@@ -395,11 +443,11 @@ Note: On the login screen under 'Demo-Zugänge' you can click on the teacher dem
 2. Create a new quiz with the **+ Neues Quiz** button
 3. Add questions (Single Choice, Multiple Choice, or True/False)
 4. Save and publish the quiz so students can see it
-5. View detailed student results via **Ergebnisse**
+5. View detailed student results via **Auswertungen**
 
 **As a Student:**
 1. Log in with a student account
-2. Browse available quizzes and click **Quizstart**
+2. Browse available quizzes and click **Quiz starten**
 3. Answer all questions and submit
 4. Review your results per question
 5. Check your overall statistics via **Statistik**
@@ -489,8 +537,8 @@ No existing data is affected when running the test suite.
 | Name | Branch | Contribution |
 |------|--------|--------------|
 | Dario | `feature/database` | Domain models, database connection, seed data, services (`AuthService`, `QuizService`, `AttemptService`), service tests (TC_013–TC_018) |
-| Arthur | `feature/teacher` | Teacher dashboard (search, publish, delete), quiz creator (all question types incl. True/False fix), quiz results (detailed view per student), quiz edit page |
-| Sharun | `feature/student` | Login, register (role selection), profile, student dashboard (search), quiz view (Single/Multiple/True-False), results, statistics, routing (`ui/pages.py`), unit tests (TC_001–TC_006, TC_019–TC_023), final merge to main |
+| Arthur | `feature/teacher` | Teacher dashboard (search, publish, unpublish ,delete), quiz creator (Single/Multiple Choice, True/False ), quiz results (detailed quiz results per student), quiz edit page |
+| Sharun | `feature/student` | Login, register (role selection), profile, student dashboard (search), quiz view (Single/Multiple/True-False), results, statistics, routing (`ui/pages.py`), unit tests (TC_001–TC_006, TC_019–TC_023), final merge to main, clickable demo cards, |
 
 ---
 
