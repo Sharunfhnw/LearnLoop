@@ -168,7 +168,7 @@ These pages summarize quiz attempts, scores, and progress so students can review
 <img width="2990" height="1706" alt="image" src="https://github.com/user-attachments/assets/c6358191-46a7-4e70-819a-eef35c76b857" />
 
 ### Profile Page
-This page lets users update their personal account settings, including password changes.
+This page gives users the opportunity to change their password.
 <img width="2992" height="1748" alt="image" src="https://github.com/user-attachments/assets/b25bb7f3-d405-4fd5-a1ef-396c0d413e4c" />
 
 
