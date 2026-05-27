@@ -17,6 +17,7 @@ It aims to:
 - [Application Requirements](#-application-requirements)
 - [User Stories](#-user-stories)
 - [Use Cases](#-use-cases)
+- [Wireframes / Mockups](#-wireframes--mockups)
 - [Architecture](#-architecture)
 - [Database and ORM](#-database-and-orm)
 - [Project Requirements](#-project-requirements)
@@ -136,6 +137,24 @@ graph TD
     S --> ViewStats[View Results and Statistics]
 
 ```
+---
+
+## 🧱 Wireframes / Mockups
+
+The wireframes and mockups for LearnLoop focus on a clean, browser-friendly learning flow and the main pages used by teachers and students.
+
+### Main Screens
+- Login / Registration page
+- Teacher dashboard with quiz management actions
+- Quiz creation and editing forms
+- Student dashboard with available quizzes
+- Quiz solving view with one question per step
+- Results and statistics pages
+- Profile page for password changes
+
+### Design Goal
+The mockups emphasize simple navigation, clear status information, and a layout that works well in a browser-based classroom setting.
+
 
 ---
 
