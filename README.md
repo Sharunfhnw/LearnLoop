@@ -149,21 +149,27 @@ The screenshot below represents the login / registration page and introduces the
 
 ### Teacher Dashboard
 This page shows quiz management actions, published and draft quizzes, and the main controls teachers need at a glance.
+<img width="2984" height="1742" alt="image" src="https://github.com/user-attachments/assets/76b8e11e-2439-419a-9086-61309e18dcb0" />
 
 ### Quiz Creation and Editing
 These forms allow teachers to build new quizzes or update existing ones with questions, answer options, and status changes.
+<img width="2958" height="1742" alt="image" src="https://github.com/user-attachments/assets/6b8a2f31-287e-43dc-ba5f-c39816d7503e" />
 
 ### Student Dashboard
 This page presents available quizzes for students and gives them a simple starting point for browsing and attempting quizzes.
+<img width="2986" height="1744" alt="image" src="https://github.com/user-attachments/assets/6cb03996-5f1e-469b-a815-093f2e6f1868" />
 
 ### Quiz Solving View
 This screen guides students through one question at a time so the answering flow stays clear and focused.
+<img width="2992" height="1746" alt="image" src="https://github.com/user-attachments/assets/ec6359ee-8dfd-454a-98e6-3e466caec366" />
 
 ### Results and Statistics
 These pages summarize quiz attempts, scores, and progress so students can review their performance after submitting a quiz.
+<img width="2990" height="1706" alt="image" src="https://github.com/user-attachments/assets/c6358191-46a7-4e70-819a-eef35c76b857" />
 
 ### Profile Page
 This page lets users update their personal account settings, including password changes.
+<img width="2992" height="1748" alt="image" src="https://github.com/user-attachments/assets/b25bb7f3-d405-4fd5-a1ef-396c0d413e4c" />
 
 
 ### Main Screens
@@ -437,7 +443,7 @@ Note: On the login screen under 'Demo-Zugänge' you can click on the teacher dem
 2. Create a new quiz with the **+ Neues Quiz** button
 3. Add questions (Single Choice, Multiple Choice, or True/False)
 4. Save and publish the quiz so students can see it
-5. View detailed student results via **Ergebnisse**
+5. View detailed student results via **Auswertungen**
 
 **As a Student:**
 1. Log in with a student account
