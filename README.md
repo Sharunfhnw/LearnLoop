@@ -447,7 +447,7 @@ Note: On the login screen under 'Demo-Zugänge' you can click on the teacher dem
 
 **As a Student:**
 1. Log in with a student account
-2. Browse available quizzes and click **Quizstart**
+2. Browse available quizzes and click **Quiz starten**
 3. Answer all questions and submit
 4. Review your results per question
 5. Check your overall statistics via **Statistik**
