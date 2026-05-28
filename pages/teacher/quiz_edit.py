@@ -1,7 +1,6 @@
 from nicegui import ui
-from sqlmodel import select
 from data_access.db import Database
-from domain.models import Quiz, Question, AnswerOption
+from domain.models import Quiz
 from services.quiz_service import QuizService
 
 
@@ -48,10 +47,12 @@ def quiz_edit(quiz_id: int, teacher_id: int):
                 if not title_input.value.strip():
                     ui.notify('Titel ist erforderlich!', color='negative')
                     return
-                quiz.title = title_input.value.strip()
-                quiz.description = desc_input.value.strip()
-                session.add(quiz)
-                session.commit()
+                quiz_service.update_info(
+                    session,
+                    quiz,
+                    title_input.value,
+                    desc_input.value
+                )
                 ui.notify('Gespeichert!', color='positive')
 
             ui.button('Informationen speichern', on_click=save_info).style(
@@ -59,7 +60,7 @@ def quiz_edit(quiz_id: int, teacher_id: int):
             ).props('no-caps flat')
 
         # Existing questions
-        questions = session.exec(select(Question).where(Question.quiz_id == quiz_id)).all()
+        questions = quiz_service.get_questions(session, quiz_id)
 
         with ui.card().style('width:100%;padding:28px;border-radius:16px;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.08)'):
             ui.label(f'Vorhandene Fragen ({len(questions)})').style('font-size:16px;font-weight:700;margin-bottom:16px')
@@ -70,7 +71,7 @@ def quiz_edit(quiz_id: int, teacher_id: int):
                 ui.label('Noch keine Fragen vorhanden.').style('color:#999;font-size:13px')
             else:
                 for i, q in enumerate(questions):
-                    opts = session.exec(select(AnswerOption).where(AnswerOption.question_id == q.id)).all()
+                    opts = quiz_service.get_answer_options(session, q.id)
                     correct_opts = [o for o in opts if o.is_correct]
                     correct_text = ', '.join(o.text for o in correct_opts)
 
@@ -85,10 +86,7 @@ def quiz_edit(quiz_id: int, teacher_id: int):
                             ui.label(f'Richtig: {correct_text}').style('font-size:11px;color:#3B6D11')
 
                         def del_question(q=q):
-                            for opt in session.exec(select(AnswerOption).where(AnswerOption.question_id == q.id)).all():
-                                session.delete(opt)
-                            session.delete(q)
-                            session.commit()
+                            quiz_service.delete_question(session, q)
                             ui.notify('Frage gelöscht.', color='info')
                             ui.navigate.to(f'/teacher/edit/{quiz_id}')
 

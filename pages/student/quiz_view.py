@@ -1,7 +1,8 @@
 from nicegui import ui, app
-from sqlmodel import select
 from data_access.db import Database
-from domain.models import Quiz, Question, AnswerOption, QuizAttempt, StudentAnswer, StudentAnswerSelection
+from domain.models import Quiz
+from services.quiz_service import QuizService
+from services.attempt_service import AttemptService
 
 
 def quiz_view(quiz_id: int, student_id: int):
@@ -10,8 +11,10 @@ def quiz_view(quiz_id: int, student_id: int):
 
     db = Database()
     session = db.get_session()
+    quiz_service = QuizService()
+    attempt_service = AttemptService()
     quiz = session.get(Quiz, quiz_id)
-    questions = session.exec(select(Question).where(Question.quiz_id == quiz_id)).all()
+    questions = quiz_service.get_questions(session, quiz_id)
 
     if not quiz or not questions:
         ui.label('Quiz nicht gefunden.').style('padding:24px')
@@ -56,7 +59,7 @@ def quiz_view(quiz_id: int, student_id: int):
         progress_bar.set_value(idx / len(questions))
         question_counter.set_text(f'Frage {idx + 1} von {len(questions)}')
 
-        options = session.exec(select(AnswerOption).where(AnswerOption.question_id == q.id)).all()
+        options = quiz_service.get_answer_options(session, q.id)
 
         type_map = {'single': 'Single Choice', 'multiple': 'Multiple Choice', 'truefalse': 'True/False'}
         type_label = type_map.get(q.question_type, 'Single Choice')
@@ -153,50 +156,13 @@ def quiz_view(quiz_id: int, student_id: int):
                                 ui.notify('Bitte alle Fragen beantworten!', color='negative')
                                 return
 
-                            # Score: 1 point per question, whole numbers only
-                            attempt = QuizAttempt(
-                                student_id=student_id, quiz_id=quiz_id,
-                                score=0, max_score=len(questions)
+                            attempt = attempt_service.submit_attempt(
+                                session=session,
+                                student_id=student_id,
+                                quiz_id=quiz_id,
+                                questions=questions,
+                                answers=answers
                             )
-                            session.add(attempt)
-                            session.commit()
-
-                            score = 0
-                            for question in questions:
-                                if question.question_type == 'multiple':
-                                    # Multiple: correct only if EXACTLY the correct set is selected
-                                    selected_ids = set(answers.get(question.id, set()))
-                                    all_opts = session.exec(
-                                        select(AnswerOption).where(AnswerOption.question_id == question.id)
-                                    ).all()
-                                    correct_ids = {o.id for o in all_opts if o.is_correct}
-                                    is_correct = selected_ids == correct_ids
-                                else:
-                                    selected_id = answers.get(question.id)
-                                    selected_ids = {selected_id} if selected_id is not None else set()
-                                    opt = session.get(AnswerOption, selected_id)
-                                    is_correct = opt.is_correct if opt else False
-
-                                student_answer = StudentAnswer(
-                                    attempt_id=attempt.id,
-                                    question_id=question.id,
-                                    is_correct=is_correct,
-                                )
-                                session.add(student_answer)
-                                session.commit()
-
-                                for opt_id in selected_ids:
-                                    session.add(StudentAnswerSelection(
-                                        student_answer_id=student_answer.id,
-                                        answer_option_id=opt_id,
-                                    ))
-
-                                if is_correct:
-                                    score += 1
-
-                            attempt.score = score
-                            session.add(attempt)
-                            session.commit()
                             ui.navigate.to(f'/student/results/{attempt.id}')
 
                         with ui.button(on_click=submit_quiz).style(

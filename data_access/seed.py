@@ -5,14 +5,14 @@ Demo accounts:
     Teachers: lehrer / lehrer123  |  frau_huber / huber123
     Students: schueler / schueler123  |  max / max123  |  lena / lena123
 """
-import hashlib
+import bcrypt
 from datetime import datetime, timedelta
 from sqlmodel import Session, select
 from domain.models import User, Quiz, Question, AnswerOption, QuizAttempt, StudentAnswer, StudentAnswerSelection
 
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def seed_data(session: Session) -> None:

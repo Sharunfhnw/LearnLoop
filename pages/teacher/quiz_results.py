@@ -1,7 +1,8 @@
 from nicegui import ui
-from sqlmodel import select
 from data_access.db import Database
-from domain.models import QuizAttempt, User, Quiz, Question, StudentAnswer, AnswerOption, StudentAnswerSelection
+from domain.models import User, Quiz
+from services.quiz_service import QuizService
+from services.attempt_service import AttemptService
 
 
 def quiz_results(quiz_id: int):
@@ -10,9 +11,11 @@ def quiz_results(quiz_id: int):
 
     db = Database()
     session = db.get_session()
+    quiz_service = QuizService()
+    attempt_service = AttemptService()
     quiz = session.get(Quiz, quiz_id)
-    attempts = session.exec(select(QuizAttempt).where(QuizAttempt.quiz_id == quiz_id)).all()
-    questions = session.exec(select(Question).where(Question.quiz_id == quiz_id)).all()
+    attempts = attempt_service.get_attempts_by_quiz(session, quiz_id)
+    questions = quiz_service.get_questions(session, quiz_id)
 
     # ── Header ───────────────────────────────────────────────────────────────
     with ui.row().style(
@@ -34,7 +37,7 @@ def quiz_results(quiz_id: int):
                 ui.label('Noch keine Schüler-Versuche vorhanden.').style('color:#999;margin-top:8px')
             return
 
-        avg = round(sum(a.score / a.max_score * 100 for a in attempts if a.max_score > 0) / len(attempts))
+        avg = attempt_service.get_average(attempts)
 
         # Summary cards
         with ui.row().style('gap:16px;margin-bottom:28px;width:100%'):
@@ -56,13 +59,11 @@ def quiz_results(quiz_id: int):
 
             for attempt in attempts:
                 student = session.get(User, attempt.student_id)
-                pct = round(attempt.score / attempt.max_score * 100) if attempt.max_score > 0 else 0
+                pct = attempt_service.calculate_percentage(attempt.score, attempt.max_score)
                 color = '#3B6D11' if pct >= 60 else '#A32D2D'
                 bg_header = '#EAF3DE' if pct >= 60 else '#FCEBEB'
 
-                student_answers = session.exec(
-                    select(StudentAnswer).where(StudentAnswer.attempt_id == attempt.id)
-                ).all()
+                student_answers = attempt_service.get_student_answers_by_attempt(session, attempt.id)
 
                 with ui.card().style(
                     'width:100%;border-radius:10px;margin-bottom:16px;'
@@ -93,18 +94,8 @@ def quiz_results(quiz_id: int):
                             sa = next((s for s in student_answers if s.question_id == q.id), None)
                             if sa is None:
                                 continue
-                            selections = session.exec(
-                                select(StudentAnswerSelection).where(
-                                    StudentAnswerSelection.student_answer_id == sa.id
-                                )
-                            ).all()
-                            sel_ids = [selection.answer_option_id for selection in selections]
-                            sel_opts = [session.get(AnswerOption, sid) for sid in sel_ids]
-                            selected_text = ', '.join(o.text for o in sel_opts if o) if sel_opts else '–'
-                            # Find correct answer text
-                            all_opts = session.exec(select(AnswerOption).where(AnswerOption.question_id == q.id)).all()
-                            correct_opts = [o for o in all_opts if o.is_correct]
-                            correct_text = ', '.join(o.text for o in correct_opts)
+                            selected_text = attempt_service.get_selected_answer_text(session, sa.id)
+                            correct_text = quiz_service.get_correct_answer_text(session, q.id)
 
                             icon = '✓' if sa.is_correct else '✗'
                             row_color = '#3B6D11' if sa.is_correct else '#A32D2D'

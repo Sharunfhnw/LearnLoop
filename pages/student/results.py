@@ -1,7 +1,8 @@
 from nicegui import ui
-from sqlmodel import select
 from data_access.db import Database
-from domain.models import QuizAttempt, Quiz, StudentAnswer, Question, AnswerOption, StudentAnswerSelection
+from domain.models import QuizAttempt, Quiz
+from services.quiz_service import QuizService
+from services.attempt_service import AttemptService
 
 
 def results_page(attempt_id: int):
@@ -10,9 +11,11 @@ def results_page(attempt_id: int):
 
     db = Database()
     session = db.get_session()
+    quiz_service = QuizService()
+    attempt_service = AttemptService()
     attempt = session.get(QuizAttempt, attempt_id)
     quiz = session.get(Quiz, attempt.quiz_id)
-    pct = round(attempt.score / attempt.max_score * 100) if attempt.max_score > 0 else 0
+    pct = attempt_service.calculate_percentage(attempt.score, attempt.max_score)
 
     # ── Header ───────────────────────────────────────────────────────────────
     with ui.row().style(
@@ -73,8 +76,8 @@ def results_page(attempt_id: int):
         with ui.card().style('width:100%;padding:28px;border-radius:14px;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.07)'):
             ui.label('Detailauswertung').style('font-size:16px;font-weight:700;margin-bottom:20px')
 
-            questions = session.exec(select(Question).where(Question.quiz_id == attempt.quiz_id)).all()
-            sa_list = session.exec(select(StudentAnswer).where(StudentAnswer.attempt_id == attempt_id)).all()
+            questions = quiz_service.get_questions(session, attempt.quiz_id)
+            sa_list = attempt_service.get_student_answers_by_attempt(session, attempt_id)
 
             for q in questions:
                 # Find student answer(s) for this question
@@ -90,18 +93,8 @@ def results_page(attempt_id: int):
                 bg = '#F6FBF0' if is_correct else '#FDF5F5'
 
                 # What was selected
-                selections = session.exec(
-                    select(StudentAnswerSelection).where(
-                        StudentAnswerSelection.student_answer_id == sa.id
-                    )
-                ).all()
-                sel_ids = [selection.answer_option_id for selection in selections]
-                sel_opts = [session.get(AnswerOption, sid) for sid in sel_ids]
-                sel_text = ', '.join(o.text for o in sel_opts if o) if sel_opts else '–'
-
-                # Correct answer
-                all_opts = session.exec(select(AnswerOption).where(AnswerOption.question_id == q.id)).all()
-                correct_text = ', '.join(o.text for o in all_opts if o.is_correct)
+                sel_text = attempt_service.get_selected_answer_text(session, sa.id)
+                correct_text = quiz_service.get_correct_answer_text(session, q.id)
 
                 with ui.row().style(
                     f'width:100%;padding:14px 16px;border-radius:10px;'

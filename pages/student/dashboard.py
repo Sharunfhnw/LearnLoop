@@ -1,7 +1,5 @@
 from nicegui import ui, app
-from sqlmodel import select
 from data_access.db import Database
-from domain.models import Question
 from services.quiz_service import QuizService
 from services.attempt_service import AttemptService
 
@@ -76,7 +74,7 @@ def student_dashboard():
         def render_cards():
             cards_container.clear()
             sq = search_input.value.lower().strip()
-            filtered = [q for q in quizzes if sq in q.title.lower() or sq in q.description.lower()] if sq else quizzes
+            filtered = quiz_service.search_published(session, sq) if sq else quizzes
 
             if not filtered:
                 with cards_container:
@@ -88,7 +86,7 @@ def student_dashboard():
             with cards_container:
                 with ui.row().style('gap:20px;flex-wrap:wrap;width:100%'):
                     for quiz in filtered:
-                        questions = session.exec(select(Question).where(Question.quiz_id == quiz.id)).all()
+                        questions = quiz_service.get_questions(session, quiz.id)
                         types_used = list(dict.fromkeys(q.question_type for q in questions))
                         type_map = {'single': 'Single Choice', 'multiple': 'Multiple Choice', 'truefalse': 'True/False'}
 
