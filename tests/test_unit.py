@@ -1,4 +1,4 @@
-import hashlib
+from services.auth_service import AuthService
 
 
 # TC_001 — Score 80%
@@ -39,16 +39,24 @@ def test_validierung_keine_fragen():
 
 # TC_006 — Password hashing
 def test_passwort_hashing():
+    auth = AuthService()
     passwort = 'meinPasswort123'
-    hash1 = hashlib.sha256(passwort.encode()).hexdigest()
-    hash2 = hashlib.sha256(passwort.encode()).hexdigest()
-    assert hash1 == hash2
+    hashed = auth.hash_password(passwort)
+
+    assert hashed != passwort
+    assert auth.check_password(passwort, hashed) is True
+    assert auth.check_password('falschesPasswort', hashed) is False
 
 
 def test_passwort_hashing_unterschiedlich():
-    hash1 = hashlib.sha256('passwort1'.encode()).hexdigest()
-    hash2 = hashlib.sha256('passwort2'.encode()).hexdigest()
+    auth = AuthService()
+    hash1 = auth.hash_password('passwort1')
+    hash2 = auth.hash_password('passwort2')
+
     assert hash1 != hash2
+    assert auth.check_password('passwort1', hash1) is True
+    assert auth.check_password('passwort2', hash2) is True
+    assert auth.check_password('passwort1', hash2) is False
 
 # ■■ AttemptService Tests ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
