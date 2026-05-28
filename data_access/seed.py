@@ -5,14 +5,14 @@ Demo accounts:
     Teachers: lehrer / lehrer123  |  frau_huber / huber123
     Students: schueler / schueler123  |  max / max123  |  lena / lena123
 """
-import hashlib
+import bcrypt
 from datetime import datetime, timedelta
 from sqlmodel import Session, select
 from domain.models import User, Quiz, Question, AnswerOption, QuizAttempt, StudentAnswer, StudentAnswerSelection
 
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def seed_data(session: Session) -> None:
@@ -36,7 +36,7 @@ def seed_data(session: Session) -> None:
         session.add(u)
     session.commit()
 
-    # ── Quiz 1: Mathematik Grundlagen (published, lehrer) ────────────────────
+    # ── Quiz 1: Basic Maths (published, teacher) ────────────────────
     q1 = Quiz(title='Mathematik Grundlagen',
               description='Teste dein Wissen in Mathematik',
               is_published=True, teacher_id=lehrer.id)
@@ -89,7 +89,7 @@ def seed_data(session: Session) -> None:
         AnswerOption(text='Falsch', is_correct=True,  question_id=f5.id),
     ]); session.commit()
 
-    # ── Quiz 2: Englisch Vokabeln (published, lehrer) ────────────────────────
+    # ── Quiz 2: English vocabulary (published, teacher) ────────────────────────
     q2 = Quiz(title='Englisch Vokabeln',
               description='Wichtige englische Vokabeln für den Alltag',
               is_published=True, teacher_id=lehrer.id)
@@ -129,7 +129,7 @@ def seed_data(session: Session) -> None:
         AnswerOption(text='tiny',   is_correct=False, question_id=g4.id),
     ]); session.commit()
 
-    # ── Quiz 3: Geografie (draft, lehrer) ────────────────────────────────────
+    # ── Quiz 3: Geography (draft, for teachers) ────────────────────────────────────
     q3 = Quiz(title='Geografie Europa',
               description='Hauptstädte und Länder in Europa',
               is_published=False, teacher_id=lehrer.id)
@@ -151,7 +151,7 @@ def seed_data(session: Session) -> None:
         AnswerOption(text='Falsch', is_correct=True,  question_id=h2.id),
     ]); session.commit()
 
-    # ── Quiz 4: Naturwissenschaften (published, frau_huber) ──────────────────
+    # ── Quiz 4: Natural Sciences (published by frau_huber) ──────────────────
     q4 = Quiz(title='Naturwissenschaften',
               description='Physik, Chemie und Biologie Grundlagen',
               is_published=True, teacher_id=huber.id)

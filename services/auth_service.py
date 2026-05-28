@@ -1,36 +1,47 @@
-import hashlib
+import bcrypt
 from sqlmodel import select
 from domain.models import User
+
+
 class AuthService:
-    """Business logic for authentification.
+    """Business logic for authentication.
+
     Responsible for:
-    - Passwort hashing with SHA256
-    - Login validierung
+    - Password hashing with bcrypt
+    - Login validation
     - New user registration
-    - Passwort changes
+    - Password changes
     """
+
     def hash_password(self, password: str) -> str:
-        """Hash the password using SHA256."""
-        return hashlib.sha256(password.encode()).hexdigest()
-    def check_password(
-        self, password: str, stored_hash: str
-    ) -> bool:
-        """Compare the entered password with the stored hash."""
-        return self.hash_password(password) == stored_hash
-    def login(
-        self, session, username: str, password: str
-    ):
-        """Search for users using username and password.
-        Returns:
-            User object if found, otherwise None
-        """
-        pw_hash = self.hash_password(password)
-        return session.exec(
-            select(User).where(
-                User.username == username,
-                User.password_hash == pw_hash
+        """Hash a plain text password with bcrypt and return a string hash."""
+        return bcrypt.hashpw(
+            password.encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
+    def check_password(self, password: str, stored_hash: str) -> bool:
+        """Verify a plain text password against a stored bcrypt hash."""
+        if not password or not stored_hash:
+            return False
+        try:
+            return bcrypt.checkpw(
+                password.encode("utf-8"),
+                stored_hash.encode("utf-8")
             )
+        except ValueError:
+            return False
+
+    def login(self, session, username: str, password: str):
+        """Return the user if username exists and password is correct."""
+        user = session.exec(
+            select(User).where(User.username == username)
         ).first()
+
+        if user and self.check_password(password, user.password_hash):
+            return user
+        return None
+
     def register(
         self,
         session,
@@ -48,7 +59,9 @@ class AuthService:
         )
         session.add(user)
         session.commit()
+        session.refresh(user)
         return user
+
     def change_password(
         self,
         session,
@@ -56,12 +69,10 @@ class AuthService:
         old_password: str,
         new_password: str
     ) -> bool:
-        """Change password after validating the old password.
-        Returns:
-            True if successful, False if old password is incorrect
-        """
-        if not self.check_password(old_password, user.password_hash):
+        """Change password after validating the old password."""
+        if not user or not self.check_password(old_password, user.password_hash):
             return False
+
         user.password_hash = self.hash_password(new_password)
         session.add(user)
         session.commit()
