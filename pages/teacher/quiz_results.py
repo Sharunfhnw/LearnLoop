@@ -1,170 +1,127 @@
 from nicegui import ui
 from sqlmodel import select
 from data_access.db import Database
-from domain.models import QuizAttempt, User, Quiz, StudentAnswer, Question, AnswerOption
- 
- 
+from domain.models import QuizAttempt, User, Quiz, Question, StudentAnswer, AnswerOption, StudentAnswerSelection
+
+
 def quiz_results(quiz_id: int):
-    """Render teacher results page for a specific quiz."""
-    ui.query('body').style('background-color:#F8F7F4;margin:0')
- 
+    """Detailed teacher view of student results for a quiz."""
+    ui.query('body').style('background-color:#F5F5F7;margin:0')
+
     db = Database()
     session = db.get_session()
     quiz = session.get(Quiz, quiz_id)
- 
-    attempts = session.exec(
-        select(QuizAttempt).where(QuizAttempt.quiz_id == quiz_id)
-    ).all()
- 
-    # --- Header ---
+    attempts = session.exec(select(QuizAttempt).where(QuizAttempt.quiz_id == quiz_id)).all()
+    questions = session.exec(select(Question).where(Question.quiz_id == quiz_id)).all()
+
+    # ── Header ───────────────────────────────────────────────────────────────
     with ui.row().style(
-        'width:100%;background:white;padding:16px 24px;'
+        'width:100%;background:white;padding:14px 40px;'
         'align-items:center;gap:16px;'
-        'border-bottom:1px solid #E5E5E5;margin-bottom:32px'
+        'box-shadow:0 1px 3px rgba(0,0,0,0.08);box-sizing:border-box'
     ):
-        ui.button('← Zurück',
-            on_click=lambda: ui.navigate.to('/teacher/dashboard')
-        ).style(
-            'background:#111;color:white;border-radius:8px;'
-            'font-size:13px;padding:8px 16px'
-        ).props('no-caps')
-        ui.label(f'Auswertungen: {quiz.title}').style(
-            'font-size:20px;font-weight:600;color:#1A1A18'
-        )
- 
-    with ui.column().style(
-        'max-width:900px;margin:0 auto;padding:0 32px 32px;width:100%'
-    ):
+        with ui.button(on_click=lambda: ui.navigate.to('/teacher/dashboard')).style(
+            'background:white;color:#1A1A18;border:1.5px solid #E5E5E5;border-radius:8px;font-size:13px'
+        ).props('no-caps flat'):
+            ui.html('&#8592; Zurück')
+        ui.label(f'Auswertungen: {quiz.title}').style('font-size:18px;font-weight:700;color:#1A1A18')
+
+    with ui.column().style('max-width:1000px;margin:32px auto;padding:0 40px;width:100%;box-sizing:border-box'):
+
         if not attempts:
-            with ui.card().style(
-                'width:100%;padding:40px;text-align:center;border-radius:12px'
-            ):
-                ui.label('Noch keine Schüler-Versuche.').style('color:#666')
+            with ui.card().style('width:100%;padding:48px;text-align:center;border-radius:12px;background:white'):
+                ui.html('&#128202;').style('font-size:40px;color:#ccc')
+                ui.label('Noch keine Schüler-Versuche vorhanden.').style('color:#999;margin-top:8px')
             return
- 
-        # Calculate average score
-        avg = sum(
-            a.score / a.max_score * 100 for a in attempts if a.max_score > 0
-        ) / len(attempts)
- 
-        # --- Stat cards ---
+
+        avg = round(sum(a.score / a.max_score * 100 for a in attempts if a.max_score > 0) / len(attempts))
+
+        # Summary cards
         with ui.row().style('gap:16px;margin-bottom:28px;width:100%'):
             for val, label, color in [
-                (str(len(attempts)), 'Versuche', '#185FA5'),
-                (f'{avg:.0f}%', 'Durchschnitt', '#185FA5'),
+                (str(len(attempts)), 'Versuche gesamt', '#185FA5'),
+                (f'{avg}%', 'Durchschnitt', '#3B6D11'),
+                (str(len(questions)), 'Fragen im Quiz', '#185FA5'),
             ]:
                 with ui.card().style(
-                    'flex:1;padding:20px;border-radius:10px;'
-                    'box-shadow:0 1px 3px rgba(0,0,0,0.06)'
+                    'flex:1;padding:20px 24px;border-radius:12px;'
+                    'background:#EBF3FB;box-shadow:none'
                 ):
-                    ui.label(label).style(
-                        'font-size:12px;color:#666;margin-bottom:6px'
-                    )
-                    ui.label(val).style(
-                        f'font-size:32px;font-weight:500;color:{color}'
-                    )
- 
-        # --- Student attempts list ---
-        with ui.card().style(
-            'width:100%;padding:24px;border-radius:12px;'
-            'box-shadow:0 1px 3px rgba(0,0,0,0.06)'
-        ):
-            # Table header
-            ui.label('Alle Schüler').style(
-                'font-size:16px;font-weight:600;margin-bottom:16px'
-            )
-            with ui.row().style(
-                'width:100%;padding:8px 0;'
-                'border-bottom:1px solid #E5E5E5;margin-bottom:8px'
-            ):
-                ui.label('Schüler').style(
-                    'flex:2;font-size:12px;color:#666;font-weight:500'
-                )
-                ui.label('Punkte').style(
-                    'flex:1;font-size:12px;color:#666;font-weight:500'
-                )
-                ui.label('%').style(
-                    'flex:1;font-size:12px;color:#666;font-weight:500'
-                )
-                ui.label('Details').style(
-                    'flex:1;font-size:12px;color:#666;font-weight:500'
-                )
- 
+                    ui.label(label).style('font-size:12px;color:#185FA5;font-weight:500;margin-bottom:6px')
+                    ui.label(val).style(f'font-size:36px;font-weight:700;color:{color}')
+
+        # Per-student detail table
+        with ui.card().style('width:100%;padding:24px;border-radius:14px;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.07)'):
+            ui.label('Alle Schüler – Detailansicht').style('font-size:16px;font-weight:700;margin-bottom:20px')
+
             for attempt in attempts:
                 student = session.get(User, attempt.student_id)
-                pct = round(
-                    attempt.score / attempt.max_score * 100
-                ) if attempt.max_score > 0 else 0
+                pct = round(attempt.score / attempt.max_score * 100) if attempt.max_score > 0 else 0
                 color = '#3B6D11' if pct >= 60 else '#A32D2D'
- 
-                with ui.row().style(
-                    'width:100%;align-items:center;'
-                    'padding:12px 0;border-bottom:0.5px solid #F0F0F0'
-                ):
-                    ui.label(
-                        student.username if student else '-'
-                    ).style('flex:2;font-size:13px;font-weight:500')
-                    ui.label(
-                        f'{attempt.score}/{attempt.max_score}'
-                    ).style('flex:1;font-size:13px;color:#666')
-                    ui.label(f'{pct}%').style(
-                        f'flex:1;font-size:13px;font-weight:500;color:{color}'
-                    )
- 
-                    # Expand/collapse detail button
-                    detail_container = ui.column().style(
-                        'width:100%;display:none;margin-top:8px;gap:6px'
-                    )
- 
-                    def toggle_detail(c=detail_container):
-                        """Toggle the detail view for this attempt."""
-                        current = c._props.get('style', '')
-                        if 'display:none' in current:
-                            c.style(current.replace('display:none', 'display:block'))
-                        else:
-                            c.style(current.replace('display:block', 'display:none'))
- 
-                    with ui.element('div').style('flex:1'):
-                        ui.button('Details',
-                            on_click=toggle_detail
-                        ).style(
-                            'background:white;color:#1A1A18;'
-                            'border:1.5px solid #E5E5E5;border-radius:6px;'
-                            'font-size:11px;padding:4px 10px'
-                        ).props('no-caps')
- 
-                # Detail row: per-question breakdown
-                answers = session.exec(
-                    select(StudentAnswer).where(
-                        StudentAnswer.attempt_id == attempt.id
-                    )
+                bg_header = '#EAF3DE' if pct >= 60 else '#FCEBEB'
+
+                student_answers = session.exec(
+                    select(StudentAnswer).where(StudentAnswer.attempt_id == attempt.id)
                 ).all()
- 
-                with detail_container:
-                    with ui.card().style(
-                        'width:100%;padding:14px;background:#F8F8F8;'
-                        'border-radius:8px;margin-bottom:8px'
+
+                with ui.card().style(
+                    'width:100%;border-radius:10px;margin-bottom:16px;'
+                    'box-shadow:0 1px 3px rgba(0,0,0,0.06);overflow:hidden'
+                ):
+                    # Student header
+                    with ui.row().style(
+                        f'width:100%;padding:14px 20px;background:{bg_header};'
+                        'align-items:center;justify-content:space-between;box-sizing:border-box'
                     ):
-                        for sa in answers:
-                            q = session.get(Question, sa.question_id)
-                            opt = session.get(
-                                AnswerOption, sa.selected_answer_option_id
+                        ui.label(student.username if student else '?').style(
+                            'font-size:15px;font-weight:600;color:#1A1A18'
+                        )
+                        with ui.row().style('gap:16px;align-items:center'):
+                            ui.label(f'{attempt.score}/{attempt.max_score} Punkte').style(
+                                'font-size:13px;color:#666'
                             )
-                            icon = '✓' if sa.is_correct else '✗'
-                            c = '#3B6D11' if sa.is_correct else '#A32D2D'
-                            bg = '#EAF3DE' if sa.is_correct else '#FCEBEB'
-                            with ui.row().style(
-                                f'width:100%;align-items:flex-start;gap:8px;'
-                                f'padding:8px;border-radius:6px;'
-                                f'background:{bg};margin-bottom:4px'
-                            ):
-                                ui.label(icon).style(
-                                    f'color:{c};font-weight:600;font-size:14px'
+                            ui.label(f'{pct}%').style(
+                                f'font-size:16px;font-weight:700;color:{color}'
+                            )
+                            ui.label(attempt.completed_at.strftime('%d.%m.%Y %H:%M')).style(
+                                'font-size:11px;color:#999'
+                            )
+
+                    # Per-question breakdown
+                    with ui.column().style('padding:12px 20px;gap:6px;width:100%;box-sizing:border-box'):
+                        for q in questions:
+                            sa = next((s for s in student_answers if s.question_id == q.id), None)
+                            if sa is None:
+                                continue
+                            selections = session.exec(
+                                select(StudentAnswerSelection).where(
+                                    StudentAnswerSelection.student_answer_id == sa.id
                                 )
-                                with ui.column().style('gap:2px'):
+                            ).all()
+                            sel_ids = [selection.answer_option_id for selection in selections]
+                            sel_opts = [session.get(AnswerOption, sid) for sid in sel_ids]
+                            selected_text = ', '.join(o.text for o in sel_opts if o) if sel_opts else '–'
+                            # Find correct answer text
+                            all_opts = session.exec(select(AnswerOption).where(AnswerOption.question_id == q.id)).all()
+                            correct_opts = [o for o in all_opts if o.is_correct]
+                            correct_text = ', '.join(o.text for o in correct_opts)
+
+                            icon = '✓' if sa.is_correct else '✗'
+                            row_color = '#3B6D11' if sa.is_correct else '#A32D2D'
+                            row_bg = '#F6FBF0' if sa.is_correct else '#FDF5F5'
+
+                            with ui.row().style(
+                                f'width:100%;padding:10px 14px;border-radius:8px;'
+                                f'background:{row_bg};align-items:flex-start;gap:12px;'
+                                'box-sizing:border-box'
+                            ):
+                                ui.label(icon).style(f'color:{row_color};font-size:16px;font-weight:700;min-width:18px')
+                                with ui.column().style('flex:1;gap:2px'):
+                                    ui.label(q.text).style('font-size:13px;font-weight:600;color:#1A1A18')
                                     ui.label(
-                                        q.text if q else '-'
-                                    ).style('font-size:12px;font-weight:500')
-                                    ui.label(
-                                        f'Antwort: {opt.text if opt else "-"}'
-                                    ).style(f'font-size:11px;color:{c}')
+                                        f'Antwort: {selected_text}'
+                                    ).style(f'font-size:12px;color:{row_color}')
+                                    if not sa.is_correct:
+                                        ui.label(f'Richtig wäre: {correct_text}').style(
+                                            'font-size:11px;color:#888'
+                                        )

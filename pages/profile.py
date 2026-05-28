@@ -15,7 +15,7 @@ def profile_page():
         role = app.storage.user.get('role', 'student')
         back = '/teacher/dashboard' \
             if role == 'teacher' else '/student/dashboard'
-        ui.button('← Zurueck',
+        ui.button('← Zurück',
             on_click=lambda: ui.navigate.to(back)
         ).style('font-size:12px')
         ui.label('Mein Profil').style(
@@ -26,7 +26,7 @@ def profile_page():
         'padding:0 24px 24px;max-width:480px;'
         'margin:0 auto;width:100%'
     ):
-        # Profil-Karte
+        # Profile card
         with ui.card().style(
             'width:100%;padding:20px;border-radius:12px;margin-bottom:16px'
         ):
@@ -45,7 +45,7 @@ def profile_page():
                         'font-size:16px;font-weight:500'
                     )
                     role_label = 'Lehrer' \
-                        if role == 'teacher' else 'Schueler'
+                        if role == 'teacher' else 'Schüler'
                     role_color = '#185FA5' \
                         if role == 'teacher' else '#3B6D11'
                     role_bg = '#E6F1FB' \
@@ -57,11 +57,11 @@ def profile_page():
                         f'font-weight:500">{role_label}</span>'
                     )
 
-        # Passwort aendern
+        # Change password
         with ui.card().style(
             'width:100%;padding:20px;border-radius:12px'
         ):
-            ui.label('Passwort aendern').style(
+            ui.label('Passwort ändern').style(
                 'font-size:14px;font-weight:500;margin-bottom:16px'
             )
             old_pw = ui.input(
@@ -71,13 +71,13 @@ def profile_page():
                 'Neues Passwort', password=True
             ).style('width:100%;margin-bottom:12px')
             confirm_pw = ui.input(
-                'Passwort bestaetigen', password=True
+                'Passwort bestätigen', password=True
             ).style('width:100%;margin-bottom:20px')
 
             def change_password():
                 if not old_pw.value or not new_pw.value:
                     ui.notify(
-                        'Alle Felder ausfullen!', color='negative'
+                        'Alle Felder ausfüllen!', color='negative'
                     )
                     return
                 if len(new_pw.value) < 6:
@@ -87,7 +87,7 @@ def profile_page():
                     return
                 if new_pw.value != confirm_pw.value:
                     ui.notify(
-                        'Passwoerter stimmen nicht!', color='negative'
+                        'Passwörter stimmen nicht!', color='negative'
                     )
                     return
                 db = Database()
@@ -95,7 +95,7 @@ def profile_page():
                 user_id = app.storage.user.get('user_id', 1)
                 from domain.models import User
                 user = session.get(User, user_id)
-                # AuthService fuer Passwortaenderung verwenden
+                # Use AuthService to change your password
                 success = auth.change_password(
                     session=session,
                     user=user,
@@ -104,7 +104,7 @@ def profile_page():
                 )
                 if success:
                     ui.notify(
-                        'Passwort geaendert!', color='positive'
+                        'Passwort geändert!', color='positive'
                     )
                     old_pw.value = new_pw.value = confirm_pw.value = ''
                 else:
@@ -113,7 +113,7 @@ def profile_page():
                     )
 
             ui.button(
-                'Passwort aendern', on_click=change_password
+                'Passwort ändern', on_click=change_password
             ).style(
                 'width:100%;background:#111;color:white;'
                 'border-radius:8px;font-size:13px'

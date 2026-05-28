@@ -4,7 +4,7 @@ from ui.pages import Pages
 
 
 class QuizApplication:
-    """App Kompositionswurzel — startet alles"""
+    """Composition Root app — gets everything started"""
 
     def __init__(self):
         self.database = Database()
@@ -17,7 +17,7 @@ class QuizApplication:
         port: int = 8080,
         reload: bool = False
     ) -> None:
-        """NiceGUI App starten"""
+        """Launch the NiceGUI app"""
         self.pages.register()
         ui.run(
             host=host,

@@ -25,19 +25,19 @@ def test_score_0_prozent():
     assert prozent == 0
 
 
-# TC_004 — Leerer Titel ungueltig
+# TC_004 — Empty title is invalid
 def test_validierung_leerer_titel():
     titel = ''
     assert titel.strip() == ''
 
 
-# TC_005 — Quiz ohne Fragen ungueltig
+# TC_005 — Quiz without questions is invalid
 def test_validierung_keine_fragen():
     fragen = []
     assert len(fragen) == 0
 
 
-# TC_006 — Passwort Hashing
+# TC_006 — Password hashing
 def test_passwort_hashing():
     passwort = 'meinPasswort123'
     hash1 = hashlib.sha256(passwort.encode()).hexdigest()

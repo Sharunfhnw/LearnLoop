@@ -40,13 +40,13 @@ def login_page():
             def do_login():
                 if not username.value or not password.value:
                     ui.notify(
-                        'Alle Felder ausfullen!',
+                        'Alle Felder ausfüllen!',
                         color='negative'
                     )
                     return
                 db = Database()
                 session = db.get_session()
-                # AuthService fuer Login verwenden
+                # Use AuthService for login
                 user = auth.login(
                     session=session,
                     username=username.value,
@@ -82,15 +82,24 @@ def login_page():
                 '<hr style="border:none;'
                 'border-top:0.5px solid #E5E5E5;margin:16px 0">'
             )
-            ui.label('Demo-Zugaenge').style(
+            ui.label('Demo-Zugänge').style(
                 'font-size:12px;font-weight:500;'
                 'color:#666;margin-bottom:8px'
             )
+
+            def fill_lehrer():
+                username.value = 'lehrer'
+                password.value = 'lehrer123'
+
+            def fill_schueler():
+                username.value = 'schueler'
+                password.value = 'schueler123'
+
             with ui.row().style('gap:8px;width:100%'):
                 with ui.element('div').style(
-                    'flex:1;background:#E6F1FB;'
-                    'border-radius:8px;padding:10px'
-                ):
+                        'flex:1;background:#E6F1FB;'
+                        'border-radius:8px;padding:10px;cursor:pointer'
+                ).on('click', lambda _: fill_lehrer()):
                     ui.label('Lehrer').style(
                         'font-size:12px;font-weight:500;color:#0C447C'
                     )
@@ -98,9 +107,9 @@ def login_page():
                         'font-size:11px;color:#185FA5'
                     )
                 with ui.element('div').style(
-                    'flex:1;background:#EAF3DE;'
-                    'border-radius:8px;padding:10px'
-                ):
+                        'flex:1;background:#EAF3DE;'
+                        'border-radius:8px;padding:10px;cursor:pointer'
+                ).on('click', lambda _: fill_schueler()):
                     ui.label('Schueler').style(
                         'font-size:12px;font-weight:500;color:#27500A'
                     )

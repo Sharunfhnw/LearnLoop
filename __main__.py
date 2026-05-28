@@ -1,6 +1,6 @@
-"""Einstiegspunkt der Anwendung.
+"""The entry point for the application.
 
-Starten mit (vom Projektordner aus):
+Run the following (from the project folder):
     python application.py
 """
 
