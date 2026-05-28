@@ -1,7 +1,7 @@
 from nicegui import ui, app
-from sqlmodel import select
 from data_access.db import Database
-from domain.models import Quiz, Question, QuizAttempt
+from services.quiz_service import QuizService
+from services.attempt_service import AttemptService
 
 
 def teacher_dashboard(teacher_id: int):
@@ -10,24 +10,20 @@ def teacher_dashboard(teacher_id: int):
 
     db = Database()
     session = db.get_session()
+    quiz_service = QuizService()
+    attempt_service = AttemptService()
     username = app.storage.user.get('username', 'Lehrer')
 
     search_query = {'v': ''}
 
     def load_quizzes():
-        return session.exec(
-            select(Quiz).where(Quiz.teacher_id == teacher_id)
-        ).all()
+        return quiz_service.get_by_teacher(session, teacher_id)
 
     def count_questions(quiz_id):
-        return len(session.exec(
-            select(Question).where(Question.quiz_id == quiz_id)
-        ).all())
+        return len(quiz_service.get_questions(session, quiz_id))
 
     def get_attempts(quiz_id):
-        return session.exec(
-            select(QuizAttempt).where(QuizAttempt.quiz_id == quiz_id)
-        ).all()
+        return attempt_service.get_attempts_by_quiz(session, quiz_id)
 
     # ── Header ───────────────────────────────────────────────────────────────
     with ui.row().style(
@@ -110,11 +106,11 @@ def teacher_dashboard(teacher_id: int):
             with cards_container:
                 with ui.row().style('gap:20px;flex-wrap:wrap;width:100%'):
                     for quiz in filtered:
-                        questions = session.exec(select(Question).where(Question.quiz_id == quiz.id)).all()
+                        questions = quiz_service.get_questions(session, quiz.id)
                         attempts = get_attempts(quiz.id)
                         avg_pct = None
                         if attempts:
-                            avg_pct = round(sum(a.score / a.max_score * 100 for a in attempts if a.max_score > 0) / len(attempts))
+                            avg_pct = attempt_service.get_average(attempts)
 
                         types_used = list(dict.fromkeys(q.question_type for q in questions))
                         type_map = {'single': 'Single Choice', 'multiple': 'Multiple Choice', 'truefalse': 'True/False'}
@@ -177,24 +173,7 @@ def teacher_dashboard(teacher_id: int):
                                         with ui.row().style('gap:10px;justify-content:flex-end'):
                                             ui.button('Abbrechen', on_click=dlg.close).props('flat no-caps').style('color:#666')
                                             def do_delete(q=q, d=dlg):
-                                                # delete attempts, answers, options, questions, quiz
-                                                from domain.models import StudentAnswer, AnswerOption, QuizAttempt, StudentAnswerSelection
-                                                atts = session.exec(select(QuizAttempt).where(QuizAttempt.quiz_id == q.id)).all()
-                                                for att in atts:
-                                                    for sa in session.exec(select(StudentAnswer).where(StudentAnswer.attempt_id == att.id)).all():
-                                                        for selection in session.exec(
-                                                            select(StudentAnswerSelection).where(StudentAnswerSelection.student_answer_id == sa.id)
-                                                        ).all():
-                                                            session.delete(selection)
-                                                        session.delete(sa)
-                                                    session.delete(att)
-                                                qs = session.exec(select(Question).where(Question.quiz_id == q.id)).all()
-                                                for question in qs:
-                                                    for opt in session.exec(select(AnswerOption).where(AnswerOption.question_id == question.id)).all():
-                                                        session.delete(opt)
-                                                    session.delete(question)
-                                                session.delete(q)
-                                                session.commit()
+                                                quiz_service.delete(session, q)
                                                 d.close()
                                                 ui.notify('Quiz gelöscht.', color='positive')
                                                 render_cards()
@@ -218,9 +197,7 @@ def teacher_dashboard(teacher_id: int):
                                         'Veröffentlicht</span>'
                                     )
                                     def unpublish(q=quiz):
-                                        q.is_published = False
-                                        session.add(q)
-                                        session.commit()
+                                        quiz_service.unpublish(session, q)
                                         ui.notify('Quiz als Entwurf gesetzt.', color='info')
                                         render_cards()
                                     with ui.button(on_click=unpublish).style(
@@ -234,9 +211,7 @@ def teacher_dashboard(teacher_id: int):
                                         'padding:5px 14px;border-radius:20px;font-size:11px">Entwurf</span>'
                                     )
                                     def publish(q=quiz):
-                                        q.is_published = True
-                                        session.add(q)
-                                        session.commit()
+                                        quiz_service.publish(session, q)
                                         ui.notify('Quiz veröffentlicht!', color='positive')
                                         render_cards()
                                     with ui.button(on_click=publish).style(
