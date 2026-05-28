@@ -129,7 +129,22 @@ As a student, I want to see all my past quiz attempts with scores and percentage
 
 The following Use Case Diagram shows the main actors and their primary interactions with the system.
 
-mermaid graph TD     T[Teacher]     S[Student]      T --> CreateQuiz[Create Quiz]     T --> EditQuiz[Edit Quiz]     T --> PublishQuiz[Publish and Unpublish Quiz]     T --> ViewResults[View Student Results]     T --> Register[Register and Login]      S --> Register[Register and Login]     S --> Browse[Browse Quizzes]     S --> Attempt[Attempt Quiz]     S --> ViewStats[View Results and Statistics] 
+```mermaid
+flowchart TD
+    T[Teacher]
+    S[Student]
+
+    T --> CreateQuiz[Create Quiz]
+    T --> EditQuiz[Edit Quiz]
+    T --> PublishQuiz[Publish and Unpublish Quiz]
+    T --> ViewResults[View Student Results]
+    T --> Register[Register and Login]
+
+    S --> Register[Register and Login]
+    S --> Browse[Browse Quizzes]
+    S --> Attempt[Attempt Quiz]
+    S --> ViewStats[View Results and Statistics]
+```
 
 ---
 
@@ -221,7 +236,19 @@ The design emphasizes simple navigation, clear status information, and a colorfu
 
 The following diagram shows the main components and their relationships: browser, NiceGUI server, UI pages, service layer, data access layer, and database.
 
-mermaid graph LR     Browser["Browser / Thin Client"]     Server["NiceGUI App Server"]     UIComp["UI Pages and Controllers"]     Services["Service Layer: Auth, Quiz, Attempt"]     DAO["Data Access Layer / DAO"]     DB["SQLite Database with SQLModel"]      Browser --> Server     Server --> UIComp     UIComp --> Services     Services --> DAO     DAO --> DB      subgraph "Server Side"         Server         UIComp         Services         DAO     end 
+```mermaid
+flowchart TD
+    Browser[Browser / Thin Client] --> UI[NiceGUI UI Pages]
+    UI --> Service[Service Layer]
+    Service --> DAO[Data Access Layer / DAO]
+    DAO --> DB[(SQLite Database)]
+
+    Service --> AuthService[AuthService]
+    Service --> QuizService[QuizService]
+    Service --> AttemptService[AttemptService]
+```
+
+The UI does not access the database directly. The flow is UI → Service → DAO → SQLite.
 
 ---
 
@@ -338,7 +365,53 @@ The main business logic is organized in service classes:
 
 ## 📂 Repository Structure
 
-text quiz-app/ ├── __init__.py ├── application.py          ← App entry point (QuizApplication class) ├── __main__.py ├── requirements.txt ├── data_access/ │   ├── __init__.py │   ├── dao.py              ← Data Access Objects (UserDAO, QuizDAO) │   ├── db.py               ← Database class (Facade) │   └── seed.py             ← Demo data seeder ├── domain/ │   ├── __init__.py │   └── models.py           ← SQLModel table definitions ├── services/ │   ├── __init__.py │   ├── auth_service.py     ← Login, register, password change │   ├── quiz_service.py     ← Quiz creation and management │   └── attempt_service.py  ← Score calculation and statistics ├── pages/ │   ├── __init__.py │   ├── login.py │   ├── register.py │   ├── profile.py │   ├── teacher/ │   │   ├── __init__.py │   │   ├── dashboard.py │   │   ├── quiz_create.py │   │   ├── quiz_edit.py │   │   └── quiz_results.py │   └── student/ │       ├── __init__.py │       ├── dashboard.py │       ├── quiz_view.py │       ├── results.py │       └── statistics.py ├── ui/ │   ├── __init__.py │   ├── pages.py            ← URL routing │   └── controllers.py └── tests/     ├── __init__.py     ├── test_unit.py        ← TC_001–TC_006, TC_019–TC_023     ├── test_db.py          ← TC_007–TC_009     ├── test_integration.py ← TC_010–TC_012     └── test_services.py    ← TC_013–TC_018 
+```text
+quiz-app/
+├── __init__.py
+├── __main__.py
+├── application.py          ← App entry point (QuizApplication class)
+├── requirements.txt
+├── data_access/
+│   ├── __init__.py
+│   ├── dao.py              ← Data Access Objects (UserDAO, QuizDAO)
+│   ├── db.py               ← Database class (Facade)
+│   └── seed.py             ← Demo data seeder
+├── domain/
+│   ├── __init__.py
+│   └── models.py           ← SQLModel table definitions
+├── pages/
+│   ├── __init__.py
+│   ├── login.py
+│   ├── profile.py
+│   ├── register.py
+│   ├── student/
+│   │   ├── __init__.py
+│   │   ├── dashboard.py
+│   │   ├── quiz_view.py
+│   │   ├── results.py
+│   │   └── statistics.py
+│   └── teacher/
+│       ├── __init__.py
+│       ├── dashboard.py
+│       ├── quiz_create.py
+│       ├── quiz_edit.py
+│       └── quiz_results.py
+├── services/
+│   ├── __init__.py
+│   ├── auth_service.py     ← Login, register, password change
+│   ├── attempt_service.py  ← Score calculation and statistics
+│   └── quiz_service.py     ← Quiz creation and management
+├── tests/
+│   ├── __init__.py
+│   ├── test_db.py          ← TC_007–TC_009
+│   ├── test_integration.py ← TC_010–TC_012
+│   ├── test_services.py    ← TC_013–TC_018
+│   └── test_unit.py        ← TC_001–TC_006, TC_019–TC_023
+└── ui/
+    ├── __init__.py
+    ├── controllers.py
+    └── pages.py            ← URL routing
+```
 
 ---
 
