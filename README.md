@@ -194,13 +194,6 @@ The design emphasizes simple navigation, clear status information, and a colorfu
 - **Application logic:** Services and page controllers
 - **Persistence:** SQLite + SQLModel ORM + Data Access (DAO)
 
-### Service Layer
-The UI pages are responsible for rendering components, handling user input and displaying results. Business logic is handled in dedicated service classes:
-
-- `AuthService`: registration, login, password hashing and password changes
-- `QuizService`: quiz creation, editing, publishing, unpublishing and deletion
-- `AttemptService`: quiz attempts, scoring, results and statistics
-
 ### Design Decisions
 - Layered MVC structure (Model–View–Controller)
 - Clear separation of concerns between UI, services, and data access
@@ -214,22 +207,33 @@ The UI pages are responsible for rendering components, handling user input and d
 
 ### Architecture Diagram
 
-The following diagram shows the intended data flow: the browser UI talks to UI pages, which call the service layer; services use the data access layer (DAO) to interact with the SQLite database. The UI must not access the database directly.
+The following diagram shows the main components and their relationships: browser, NiceGUI server, service layer, data access layer, and database.
 
 ```mermaid
-flowchart TD
-    A[Browser / Thin Client] --> B[NiceGUI UI Pages]
-    B --> C[Service Layer]
-    C --> D[Data Access Layer / DAO]
-    D --> E[(SQLite Database)]
+graph LR
+    Browser["Browser UI"]
+    Server["NiceGUI App Server"]
+    UIComp["UI Pages and Controllers"]
+    Services["Service Layer: Auth, Quiz, Attempt"]
+    DAO["Data Access Layer"]
+    DB["SQLite Database with SQLModel"]
 
-    C --> C1[AuthService]
-    C --> C2[QuizService]
-    C --> C3[AttemptService]
+    Browser --> Server
+    Server --> UIComp
+    UIComp --> Services
+    Services --> DAO
+    DAO --> DB
+    Services --> DB
+    Server -.-> UIComp
+
+    subgraph "Server Side"
+        Server
+        UIComp
+        Services
+        DAO
+    end
 
 ```
-
-Important: UI pages render components, handle user input and display results — all business logic and data access must go through the service layer and DAO (UI → Service → DAO → SQLite).
 
 ---
 
@@ -303,26 +307,8 @@ The application validates all user input:
 - Password must be at least 6 characters on registration
 - All questions must be answered before quiz submission
 - Multiple Choice requires at least one correct answer selected
-- bcrypt hashing for all passwords — never stored in plain text
+- SHA256 hashing for all passwords — never stored in plain text
 - Old password verified before allowing password change
- - Empty title or missing questions → quiz cannot be saved
- - Password must be at least 6 characters on registration
- - All questions must be answered before quiz submission
- - Multiple Choice requires at least one correct answer selected
- - bcrypt hashing for all passwords — never stored in plain text
- - Old password verified before allowing password change
- - Empty title or missing questions → quiz cannot be saved
- - Password must be at least 6 characters on registration
- - All questions must be answered before quiz submission
- - Multiple Choice requires at least one correct answer selected
- - bcrypt hashing for all passwords — never stored in plain text
- - Old password verified before allowing password change
- - Empty title or missing questions → quiz cannot be saved
- - Password must be at least 6 characters on registration
- - All questions must be answered before quiz submission
- - Multiple Choice requires at least one correct answer selected
- - bcrypt hashing for all passwords — never stored in plain text
- - Old password verified before allowing password change
 
 ### 3. Database Management
 
@@ -349,7 +335,7 @@ All data is managed via SQLModel (ORM built on SQLAlchemy). No raw SQL is writte
 | **sqlmodel** | ORM — maps Python classes to SQLite tables (built on SQLAlchemy) |
 | **sqlalchemy** | Database toolkit (used internally by SQLModel) |
 | **pytest** | Testing framework |
-| **bcrypt** | Secure password hashing with salt |
+| **hashlib** | SHA256 password hashing (Python standard library) |
 
 ---
 
@@ -404,27 +390,6 @@ quiz-app/
 ```
 
 ---
-
-## 🔎 Key Modules
-
-Ensure the following files and folders are present and described as shown:
-
-- `services/`
-    - `auth_service.py` — Login, registration, password hashing
-    - `quiz_service.py` — Quiz management (create/edit/publish/delete)
-    - `attempt_service.py` — Scoring, results, statistics
-- `pages/`
-    - `login.py`, `register.py`, `profile.py`
-    - `student/`, `teacher/` subfolders for role-specific pages
-- `data_access/`
-    - `db.py`, `dao.py`, `seed.py`
-- `domain/`
-    - `models.py`
-- `tests/`
-    - `test_unit.py`, `test_services.py`, `test_db.py`, `test_integration.py`
-
-Also verify that package initialisation files are named `__init__.py` (not `init.py`).
-
 
 ## 🚀 How to Run
 
@@ -505,23 +470,30 @@ python -m venv .venv
 ```
 Quick note: If python is not found on Windows, run commands with `py` (e.g. `py -3 -m venv .venv).
 ```
-3. Install requirements:
+3. Abhängigkeiten installieren:
 # PowerShell
 pip install -r requirements.txt
 ```
-4. Start application:
+4. Anwendung starten:
 ```powershell
 python application.py
 ```
-5. Open your browser and accesss the URL (z. B. http://localhost:8080) displayed in the terminal.
+5. Browser öffnen und die im Terminal angezeigte URL (z. B. http://localhost:8080) aufrufen.
 
 Note: Run tests with `pytest tests/`.
 
+### Troubleshooting
+
+- Error `ZoneInfoNotFoundError` on Windows: install `tzdata` in the virtual environment:
+```powershell
+pip install tzdata
+```
+- Port already in use: ensure no other server is running on port 8080, or change the port in the start configuration.
+- Virtual environment not activated: make sure to run the activation script (`Activate.ps1` / `activate.bat`).
+- Missing dependencies / ImportError: run `pip install -r requirements.txt` again; recreate the virtual environment if necessary.
+- Issues with NiceGUI version: `requirements.txt` lists the tested version; check compatibility for major version changes.
+
 ---
-
-### Password Security
-User passwords are not stored in plain text. The application uses `bcrypt` to hash passwords before storing them in the database. During login, the entered password is verified against the stored bcrypt hash.
-
 
 ## 🧪 Testing
 
@@ -530,8 +502,6 @@ Tests are organised into four files. Run all tests with:
 ```bash
 pytest tests/
 ```
-
-The project contains unit, database, integration and service tests. The authentication tests verify `bcrypt` password hashing and password checking without comparing fixed hash values, because `bcrypt` generates a unique salt for each hash.
 
 | File | Test IDs | Description |
 |------|----------|-------------|
@@ -575,3 +545,17 @@ No existing data is affected when running the test suite.
 ## 📝 License
 
 This project is provided for **educational use only** as part of the module «Objektorientierte Programmierung».
+
+
+## Refactoring Update: Security and Service Layer
+
+- Passwords are hashed with `bcrypt` instead of SHA256/hashlib. bcrypt uses salts and is more suitable for password storage.
+- UI pages should mainly handle input, navigation and display. Business logic is centralized in `AuthService`, `QuizService` and `AttemptService`.
+- Teacher actions such as publish, unpublish, delete and result loading use service methods.
+- Student quiz submission, results and statistics use `AttemptService`.
+
+Install dependencies with:
+
+```bash
+pip install -r requirements.txt
+```
