@@ -226,3 +226,4 @@ __marimo__/
 *.sqlite
 *.sqlite3
 .nicegui/
+.DS_Store
