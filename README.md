@@ -27,7 +27,7 @@ It aims to:
 - [Repository Structure](#repository-structure)
 - [How to Run](#how-to-run)
 - [Testing](#testing)
-- [Team & Contributions](#team--contributions)
+- [Team & Contributions](#team-contributions)
 - [License](#license)
 
 
