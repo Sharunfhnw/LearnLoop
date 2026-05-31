@@ -33,6 +33,7 @@ It aims to:
 
 ---
 
+<a id="application-requirements"></a>
 ## 📝 Application Requirements
 
 ### Problem
@@ -52,6 +53,7 @@ The application allows users to:
 
 ---
 
+<a id="user-stories"></a>
 ## 📖 User Stories
 
 ### 1. Register and Login
@@ -108,6 +110,7 @@ As a student, I want to see all my past quiz attempts with scores and percentage
 
 ---
 
+<a id="use-cases"></a>
 ## 🧩 Use Cases
 
 ### Main Use Cases
@@ -149,6 +152,7 @@ flowchart TD
 
 ---
 
+<a id="app-screenshots"></a>
 ## 🧱 App Screenshots
 
 The UI of LearnLoop focuses on a clean, browser-friendly learning flow and the main pages used by teachers and students.
@@ -211,6 +215,7 @@ The design emphasizes simple navigation, clear status information, and a colorfu
 
 ---
 
+<a id="architecture"></a>
 ## 🏛️ Architecture
 
 ### Layers
@@ -253,6 +258,7 @@ The UI does not access the database directly. The flow is UI → Service → DAO
 
 ---
 
+<a id="database-and-orm"></a>
 ## 🗄️ Database and ORM
 
 The application uses SQLModel to map domain objects to a SQLite database.
@@ -295,6 +301,7 @@ The application uses SQLModel to map domain objects to a SQLite database.
 
 ---
 
+<a id="project-requirements"></a>
 ## ✅ Project Requirements
 
 ### 1. Browser-based App with NiceGUI
@@ -329,6 +336,7 @@ All data is managed via SQLModel, an ORM built on SQLAlchemy. No raw SQL is writ
 
 ---
 
+<a id="implementation"></a>
 ## ⚙️ Implementation
 
 ### Technology
@@ -364,6 +372,7 @@ The main business logic is organized in service classes:
 
 ---
 
+<a id="repository-structure"></a>
 ## 📂 Repository Structure
 
 ```text
@@ -416,6 +425,7 @@ quiz-app/
 
 ---
 
+<a id="how-to-run"></a>
 ## 🚀 How to Run
 
 ### 1. Project Setup
@@ -488,6 +498,7 @@ As a Student:
 
 ---
 
+<a id="testing"></a>
 ## 🧪 Testing
 
 Tests are organised into four files. Run all tests with:
@@ -519,6 +530,7 @@ Note: All tests use an in-memory SQLite database (sqlite:///:memory:). They run 
 
 ---
 
+<a id="team-contributions"></a>
 ## 👥 Team & Contributions
 
 | Name | Branch | Contribution |
@@ -539,6 +551,7 @@ Note: All tests use an in-memory SQLite database (sqlite:///:memory:). They run 
 
 ---
 
+<a id="license"></a>
 ## 📝 License
 
 This project is provided for educational use only as part of the module «Objektorientierte Programmierung
