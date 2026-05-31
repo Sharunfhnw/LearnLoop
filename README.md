@@ -16,19 +16,20 @@ It aims to:
 
 ## 📑 Table of Contents
 
-- Application Requirements
-- User Stories
-- Use Cases
-- App Screenshots
-- Architecture
-- Database and ORM
-- Project Requirements
-- Implementation
-- Repository Structure
-- How to Run
-- Testing
-- Team & Contributions
-- License
+- [Application Requirements](#application-requirements)
+- [User Stories](#user-stories)
+- [Use Cases](#use-cases)
+- [App Screenshots](#app-screenshots)
+- [Architecture](#architecture)
+- [Database and ORM](#database-and-orm)
+- [Project Requirements](#project-requirements)
+- [Implementation](#implementation)
+- [Repository Structure](#repository-structure)
+- [How to Run](#how-to-run)
+- [Testing](#testing)
+- [Team & Contributions](#team--contributions)
+- [License](#license)
+
 
 ---
 
